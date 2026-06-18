@@ -1,0 +1,21 @@
+{
+  "name": "conkgames",
+  "version": "1.0.0",
+  "description": "ConkGames arcade portal",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "node deploy.mjs"
+  },
+  "dependencies": {
+    "astro": "^6.4.6",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-cloudfront": "^3.1072.0",
+    "@aws-sdk/client-s3": "^3.1072.0",
+    "@types/qrcode": "^1.5.6",
+    "dotenv": "^17.4.2"
+  }
+}

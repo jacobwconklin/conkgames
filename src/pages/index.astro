@@ -1,0 +1,1008 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { games } from '../data/games';
+import QRCode from 'qrcode';
+
+const featured = games.find(g => g.featured) ?? games[0];
+
+const appStoreUrl = 'https://apps.apple.com/us/app/techno-holdem/id6755963051';
+const qrSvg = await QRCode.toString(appStoreUrl, {
+  type: 'svg',
+  margin: 1,
+  color: { dark: '#ffffff', light: '#00000000' },
+  width: 160,
+});
+---
+
+<Layout title="ConkGames — Play Free Games">
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Background toggle -->
+  <button id="bg-toggle" class="pixel" aria-label="Switch background">
+    <span id="bg-icon"></span>
+    <span id="bg-label"></span>
+  </button>
+
+  <header>
+    <div class="logo pixel">
+      <span class="logo-conk">CONK</span><span class="logo-games">GAMES</span>
+    </div>
+  </header>
+
+  <!-- Techno Hold'em promo hero -->
+  <a href={appStoreUrl} target="_blank" rel="noopener noreferrer" class="promo-hero">
+    <div class="promo-bg"></div>
+    <div class="promo-content">
+      <div class="promo-text">
+        <h2 class="promo-title pixel">Techno Hold'em</h2>
+        <p class="promo-sub">is now on the iOS App Store</p>
+        <p class="promo-cta">
+          Get it on sale now —&nbsp;
+          <span class="price-old">free</span>
+          <span class="price-new pixel">FREE</span>
+        </p>
+      </div>
+      <div class="qr-wrap" aria-label="Scan to download">
+        <Fragment set:html={qrSvg} />
+      </div>
+    </div>
+  </a>
+
+  <!-- Game grid -->
+  <section class="arcade">
+    <div class="grid">
+      {games.map(game => (
+        <a href={game.url} target="_blank" rel="noopener noreferrer" class="game-card glass">
+          <div class="thumb-wrap" data-fit={game.imageFit ?? 'cover'}>
+            <img src={game.thumbnail} alt={game.title} />
+          </div>
+          <div class="card-body">
+            <h3 class="pixel">{game.title}</h3>
+            <p>{game.description}</p>
+            <div class="players">
+              <span class="person-icon">&#x1F464;</span>
+              <span class="pixel">{game.players}</span>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+  #bg-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ── Toggle button ── */
+  #bg-toggle {
+    position: fixed;
+    top: 1.2rem;
+    left: 1.2rem;
+    z-index: 1000;
+    font-size: 0.65rem;
+    padding: 0.7em 1.3em;
+    background: rgba(10, 0, 22, 0.75);
+    border: 2px solid var(--btn-color, var(--neon-cyan));
+    border-radius: 0.8rem;
+    color: var(--btn-color, var(--neon-cyan));
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 10px var(--btn-color, var(--neon-cyan));
+    box-shadow: 0 0 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+    transition: border-color 0.3s, color 0.3s, text-shadow 0.3s, box-shadow 0.3s;
+  }
+  #bg-toggle:hover {
+    box-shadow: 0 0 22px var(--btn-color, var(--neon-cyan)), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  #bg-icon { font-size: 1em; line-height: 1; }
+
+  /* ── Layout shells ── */
+  header, section, footer { position: relative; z-index: 1; }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4rem 1rem 2rem;
+    text-align: center;
+  }
+
+  .logo { font-size: clamp(2rem, 6vw, 4rem); line-height: 1; }
+  .logo-conk  { color: var(--neon-cyan);   text-shadow: 0 0 12px var(--neon-cyan),  0 0 30px var(--neon-cyan); }
+  .logo-games { color: var(--neon-pink);   text-shadow: 0 0 12px var(--neon-pink),  0 0 30px var(--neon-pink); }
+
+  /* ── Liquid glass card ── */
+  .glass {
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0.10) 0%,
+      rgba(255,255,255,0.04) 100%
+    );
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 1.5rem;
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.25),
+      0 0 0 1px rgba(0,245,255,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .glass:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow:
+      0 16px 48px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.3),
+      0 0 0 1px rgba(0,245,255,0.25),
+      0 0 24px rgba(0,245,255,0.12);
+  }
+
+  /* ── Featured banner ── */
+  .featured {
+    max-width: 1100px;
+    margin: 0 auto 3rem;
+    padding: 0 1.5rem;
+  }
+
+  .featured-banner {
+    display: block;
+    position: relative;
+    height: 160px;
+    overflow: hidden;
+    border-radius: 1.5rem;
+  }
+
+  .featured-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(10,0,22,0.72) 0%, transparent 60%);
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+  }
+
+  .banner-overlay h2 {
+    font-size: clamp(0.55rem, 1.8vw, 0.9rem);
+    color: var(--text);
+    text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+    letter-spacing: 0.06em;
+  }
+
+  /* ── Game grid ── */
+  .arcade {
+    max-width: 1100px;
+    margin: 0 auto 5rem;
+    padding: 0 1.5rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .game-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .thumb-wrap {
+    height: 160px;
+    background: rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.5rem 1.5rem 0 0;
+  }
+  .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .thumb-wrap[data-fit='contain'] { background: #000; }
+  .thumb-wrap[data-fit='contain'] img { object-fit: contain; }
+
+
+  .card-body {
+    padding: 1rem 1.2rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .card-body h3 {
+    font-size: 0.55rem;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+
+  .card-body p {
+    font-size: 0.82rem;
+    color: rgba(240,230,255,0.6);
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .players {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.3rem;
+  }
+
+  .person-icon { font-size: 0.85rem; line-height: 1; }
+
+  .players .pixel {
+    font-size: 0.45rem;
+    color: rgba(240,230,255,0.45);
+    letter-spacing: 0.05em;
+  }
+
+
+  /* ── Promo hero ── */
+  .promo-hero {
+    display: block;
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto 3rem;
+    padding: 0 1.5rem;
+    z-index: 1;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .promo-bg {
+    position: absolute;
+    inset: 0 1.5rem;
+    border-radius: 1.5rem;
+    background-image: url('/poker-block-tessellation.png');
+    background-repeat: repeat;
+    background-size: 120px;
+    opacity: 0.28;
+    z-index: 0;
+    /* No filter/blur — sharp pixels only */
+  }
+
+  .promo-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 2.5rem 2.5rem;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(10,0,22,0.55);
+    transition: background 0.2s;
+  }
+  .promo-hero:hover .promo-content {
+    background: rgba(10,0,22,0.4);
+  }
+
+  .promo-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    flex: 1;
+  }
+
+  .promo-title {
+    font-size: clamp(1rem, 3vw, 1.6rem);
+    color: var(--text);
+    line-height: 1.2;
+    text-shadow: 0 2px 16px rgba(0,0,0,0.6);
+  }
+
+  .promo-sub {
+    font-size: 1rem;
+    color: rgba(240,230,255,0.75);
+  }
+
+  .promo-cta {
+    font-size: 0.95rem;
+    color: rgba(240,230,255,0.8);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .price-old {
+    position: relative;
+    color: rgba(240,230,255,0.5);
+    font-size: 0.9rem;
+    /* Custom red strikethrough instead of text-decoration */
+    text-decoration: none;
+  }
+  .price-old::after {
+    content: '';
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    top: 50%;
+    height: 2px;
+    background: #ff2020;
+    transform: translateY(-50%);
+  }
+
+  .price-new {
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    color: #ff2020;
+    text-shadow: 0 0 14px rgba(255,32,32,0.6), 0 2px 8px rgba(0,0,0,0.5);
+    letter-spacing: 0.05em;
+    transform: rotate(-45deg);
+    display: inline-block;
+    line-height: 1;
+  }
+
+  .qr-wrap {
+    display: flex;
+    flex-shrink: 0;
+    padding: 0.7rem;
+    border-radius: 1rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+  }
+
+  .qr-wrap svg {
+    width: 140px;
+    height: 140px;
+    display: block;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .featured-banner { height: 110px; }
+    .promo-content { flex-direction: column; align-items: flex-start; }
+    .qr-wrap { align-self: center; }
+  }
+</style>
+
+<script>
+// ─────────────────────────────────────────────
+//  Canvas & resize
+// ─────────────────────────────────────────────
+const canvas = document.getElementById('bg-canvas') as HTMLCanvasElement;
+const ctx = canvas.getContext('2d')!;
+let W = 0, H = 0;
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ─────────────────────────────────────────────
+//  Mouse tracker (shared)
+// ─────────────────────────────────────────────
+let mouseX = -9999, mouseY = -9999;
+let mouseOnScreen = false;
+window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; mouseOnScreen = true; });
+window.addEventListener('mouseleave', () => { mouseOnScreen = false; });
+window.addEventListener('mouseenter', () => { mouseOnScreen = true; });
+
+// ─────────────────────────────────────────────
+//  Background registry
+// ─────────────────────────────────────────────
+const BG_LIST = ['stars', 'landscape', 'matrix', 'bugs'] as const;
+type BgId = typeof BG_LIST[number];
+
+const BG_META: Record<BgId, { icon: string; label: string; color: string }> = {
+  stars:     { icon: '✦', label: 'STARS',     color: '#00f5ff' },
+  landscape: { icon: '⛰', label: 'LANDSCAPE', color: '#ffe600' },
+  matrix:    { icon: '⌨', label: 'MATRIX',    color: '#00ff44' },
+  bugs:      { icon: '🪲', label: 'BUGS',      color: '#ff2d78' },
+};
+
+// Always random on load
+let current: BgId = BG_LIST[Math.floor(Math.random() * BG_LIST.length)];
+
+const btnIcon  = document.getElementById('bg-icon')!;
+const btnLabel = document.getElementById('bg-label')!;
+
+const btnEl = document.getElementById('bg-toggle')!;
+
+function updateBtn() {
+  const meta = BG_META[current];
+  btnIcon.textContent  = meta.icon + ' ';
+  btnLabel.textContent = meta.label;
+  btnEl.style.setProperty('--btn-color', meta.color);
+}
+updateBtn();
+
+btnEl.addEventListener('click', () => {
+  const idx = BG_LIST.indexOf(current);
+  current = BG_LIST[(idx + 1) % BG_LIST.length];
+  updateBtn();
+  resetBg();
+});
+
+function resetBg() {
+  if (current === 'matrix') initMatrix();
+  if (current === 'bugs')   initBugs();
+  ctx.clearRect(0, 0, W, H);
+}
+
+// ─────────────────────────────────────────────
+//  Shared scroll tracker
+// ─────────────────────────────────────────────
+let scrollY = 0;
+window.addEventListener('scroll', () => { scrollY = window.scrollY; }, { passive: true });
+
+// ─────────────────────────────────────────────
+//  BG 1 — STARS
+// ─────────────────────────────────────────────
+const stars = Array.from({ length: 200 }, () => ({
+  x:     Math.random(),
+  y:     Math.random(),
+  r:     Math.random() * 1.5 + 0.2,
+  speed: Math.random() * 0.00012 + 0.00004,
+  phase: Math.random() * Math.PI * 2,
+}));
+
+function drawStars(t: number) {
+  ctx.clearRect(0, 0, W, H);
+  for (const s of stars) {
+    s.y += s.speed;
+    if (s.y > 1) s.y = 0;
+    const alpha = 0.35 + 0.65 * Math.abs(Math.sin(t * 0.001 + s.phase));
+    ctx.beginPath();
+    ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+    ctx.fill();
+  }
+}
+
+// ─────────────────────────────────────────────
+//  BG 2 — MATRIX
+// ─────────────────────────────────────────────
+const MCHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*アイウエオカキクケコサシスセソ';
+interface MCol { x: number; y: number; speed: number; chars: string[]; bright: number }
+let mCols: MCol[] = [];
+
+function initMatrix() {
+  const colW = 16;
+  const count = Math.ceil(W / colW);
+  mCols = Array.from({ length: count }, (_, i) => ({
+    x:      i * colW,
+    y:      Math.random() * H,
+    speed:  1.2 + Math.random() * 2.8,
+    chars:  Array.from({ length: 28 }, () => rndChar()),
+    bright: 0.4 + Math.random() * 0.6,
+  }));
+}
+
+function rndChar() { return MCHARS[Math.floor(Math.random() * MCHARS.length)]; }
+
+function drawMatrix() {
+  // Fade trail
+  ctx.fillStyle = 'rgba(10,0,16,0.14)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.font = '14px "Courier New", monospace';
+
+  for (const col of mCols) {
+    col.y += col.speed;
+    if (col.y > H + col.chars.length * 16) {
+      col.y = -col.chars.length * 16;
+      col.speed = 1.2 + Math.random() * 2.8;
+    }
+
+    for (let i = 0; i < col.chars.length; i++) {
+      const cy = col.y - i * 16;
+      if (cy < -16 || cy > H + 16) continue;
+      const fade = 1 - i / col.chars.length;
+      if (i === 0) {
+        ctx.fillStyle = `rgba(210,255,210,${col.bright})`;
+      } else {
+        ctx.fillStyle = `rgba(0,220,60,${(fade * col.bright * 0.75).toFixed(2)})`;
+      }
+      ctx.fillText(col.chars[i], col.x, cy);
+    }
+
+    // Occasional char mutation
+    if (Math.random() < 0.04) {
+      col.chars[Math.floor(Math.random() * col.chars.length)] = rndChar();
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+//  BG 3 — ASCII LANDSCAPE
+// ─────────────────────────────────────────────
+
+// ── Birds ──
+interface Bird { x: number; y: number; speed: number; phase: number; phaseSpeed: number; scale: number }
+const birds: Bird[] = Array.from({ length: 14 }, () => ({
+  x:          Math.random() * 2,        // 0–2 in normalised coords (wraps)
+  y:          0.04 + Math.random() * 0.22,
+  speed:      0.00018 + Math.random() * 0.00022,
+  phase:      Math.random() * Math.PI * 2,
+  phaseSpeed: 0.04 + Math.random() * 0.05,
+  scale:      0.65 + Math.random() * 0.7,
+}));
+
+// ── Plane ──
+let planeX = -0.25;  // normalised
+
+// ── Wave ──
+let waveT = 0;
+
+// ── Mountain silhouette (left 55% of screen) ──
+// Defined as [xFrac, yFrac] peaks; we'll build a polyline
+const MOUNTAIN_PEAKS = [
+  [0.00, 0.92], [0.04, 0.78], [0.10, 0.60], [0.08, 0.72],
+  [0.14, 0.52], [0.19, 0.66], [0.24, 0.44], [0.21, 0.57],
+  [0.28, 0.38], [0.25, 0.50], [0.32, 0.42], [0.36, 0.55],
+  [0.40, 0.34], [0.37, 0.48], [0.44, 0.47], [0.48, 0.58],
+  [0.52, 0.40], [0.56, 0.65], [0.56, 0.92],
+];
+
+// ── City skyline (right 50%) ──
+// Each building: [xFrac, yFrac_top, widthFrac, hasAntenna]
+const BUILDINGS = [
+  { x: 0.52, y: 0.72, w: 0.04, antenna: false },
+  { x: 0.57, y: 0.60, w: 0.05, antenna: true  },
+  { x: 0.63, y: 0.68, w: 0.04, antenna: false },
+  { x: 0.68, y: 0.52, w: 0.06, antenna: true  },
+  { x: 0.75, y: 0.64, w: 0.04, antenna: false },
+  { x: 0.80, y: 0.56, w: 0.05, antenna: true  },
+  { x: 0.86, y: 0.70, w: 0.04, antenna: false },
+  { x: 0.91, y: 0.58, w: 0.06, antenna: false },
+  { x: 0.98, y: 0.75, w: 0.05, antenna: false },
+];
+
+// ── Boats ──
+interface Boat { x: number; speed: number; bobPhase: number }
+const BOATS: Boat[] = [
+  { x: 0.15, speed:  0.00008, bobPhase: 0.0 },
+  { x: 0.50, speed: -0.00006, bobPhase: 1.2 },
+  { x: 0.75, speed:  0.00005, bobPhase: 2.4 },
+];
+
+function drawLandscape(t: number) {
+  ctx.clearRect(0, 0, W, H);
+
+  const FS   = Math.max(11, Math.min(14, W / 120));  // responsive font size
+  const LH   = FS * 1.18;
+  const CW   = FS * 0.603;  // monospace char width ≈ 0.603× size for Courier New
+
+  ctx.font = `${FS}px "Courier New", monospace`;
+  ctx.textBaseline = 'top';
+
+  // Parallax multipliers for each layer
+  const SKY_P  = 0.04;
+  const MID_P  = 0.18;
+  const LAKE_P = 0.38;
+
+  const skyOff  = scrollY * SKY_P;
+  const midOff  = scrollY * MID_P;
+  const lakeOff = scrollY * LAKE_P;
+
+  waveT += 0.018;
+
+  // ────────────────────────────────
+  //  SKY LAYER
+  // ────────────────────────────────
+
+  // --- Sun ---
+  const sunX = W * 0.12;
+  const sunY = H * 0.08 - skyOff;
+  const sunLines = [
+    '   \\  |  /   ',
+    '    \\ | /    ',
+    '  ---[☀]---  ',
+    '    / | \\    ',
+    '   /  |  \\   ',
+  ];
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = '#ffe600';
+  sunLines.forEach((ln, i) => ctx.fillText(ln, sunX, sunY + i * LH));
+
+  // --- Clouds ---
+  const clouds = [
+    { x: 0.35, y: 0.07, txt: '(   ~   )' },
+    { x: 0.58, y: 0.04, txt: '(  ~~~  )' },
+    { x: 0.72, y: 0.09, txt: '( ~~ )' },
+    { x: 0.20, y: 0.14, txt: '( ~ )' },
+    { x: 0.85, y: 0.06, txt: '(  ~~~  )' },
+  ];
+  ctx.fillStyle = '#c8e8ff';
+  ctx.globalAlpha = 0.18;
+  for (const c of clouds) {
+    ctx.fillText(c.txt, W * c.x, H * c.y - skyOff);
+  }
+
+  // --- Plane ---
+  planeX += 0.00035;
+  if (planeX > 1.25) planeX = -0.22;
+  const planeStr = '>--[|]--->';
+  ctx.fillStyle = '#ffe0a0';
+  ctx.globalAlpha = 0.55;
+  ctx.fillText(planeStr, planeX * W, H * 0.055 - skyOff);
+
+  // --- Birds ---
+  ctx.fillStyle = '#b0d8ff';
+  for (const b of birds) {
+    b.x += b.speed;
+    if (b.x > 1.08) b.x = -0.06;
+    b.phase += b.phaseSpeed;
+    const flap = Math.sin(b.phase) > 0;
+    const bStr = flap ? '^^' : '∧∧';
+    ctx.globalAlpha = 0.28 + b.scale * 0.22;
+    ctx.font = `${FS * b.scale}px "Courier New", monospace`;
+    ctx.fillText(bStr, b.x * W, b.y * H - skyOff);
+  }
+  ctx.font = `${FS}px "Courier New", monospace`;
+
+  // ────────────────────────────────
+  //  MOUNTAIN LAYER (left ~55%)
+  // ────────────────────────────────
+  ctx.globalAlpha = 1;
+
+  // Draw mountain fill as stacked ASCII rows
+  const mtTop    = MOUNTAIN_PEAKS.reduce((mn, p) => Math.min(mn, p[1] * H), H);
+  const mtBottom = H * 0.88 - midOff;
+
+  // Build silhouette Y values per char column
+  const mtCols = Math.ceil(W * 0.56 / CW);
+  const sil: number[] = new Array(mtCols).fill(H);
+
+  // Interpolate silhouette from peak list
+  for (let i = 0; i < MOUNTAIN_PEAKS.length - 1; i++) {
+    const [x0, y0] = MOUNTAIN_PEAKS[i];
+    const [x1, y1] = MOUNTAIN_PEAKS[i + 1];
+    const c0 = Math.floor(x0 * W / CW);
+    const c1 = Math.floor(x1 * W / CW);
+    for (let c = c0; c <= Math.min(c1, mtCols - 1); c++) {
+      const t2 = c1 === c0 ? 0 : (c - c0) / (c1 - c0);
+      sil[c] = (y0 + (y1 - y0) * t2) * H;
+    }
+  }
+
+  // Draw fill characters column by column
+  const fillChars = ['|', ':', '.', ' '];
+  for (let col = 0; col < mtCols; col++) {
+    const topY = sil[col] - midOff;
+    const rows = Math.ceil((mtBottom - topY) / LH);
+    for (let row = 0; row < rows; row++) {
+      const y = topY + row * LH;
+      if (y < 0 || y > H) continue;
+      const depth = row / Math.max(rows, 1);
+      const ch = depth < 0.08 ? '*' : depth < 0.2 ? '/' : depth < 0.5 ? fillChars[row % 3] : ' ';
+      // Snow caps
+      if (depth < 0.12 && sil[col] < H * 0.55) {
+        ctx.fillStyle = '#e0f4ff';
+        ctx.globalAlpha = 0.5;
+      } else {
+        ctx.fillStyle = '#00f5ff';
+        ctx.globalAlpha = 0.13 + depth * 0.05;
+      }
+      ctx.fillText(ch, col * CW, y);
+    }
+  }
+
+  // Mountain outline (bright edges)
+  ctx.fillStyle = '#00f5ff';
+  ctx.globalAlpha = 0.35;
+  for (let col = 1; col < mtCols - 1; col++) {
+    const y = sil[col] - midOff;
+    if (y < 0 || y > H) continue;
+    // Determine slope direction for / or \
+    const dy = sil[col + 1] - sil[col - 1];
+    const ch = dy > 2 ? '\\' : dy < -2 ? '/' : '_';
+    ctx.fillText(ch, col * CW, y);
+  }
+
+  // ────────────────────────────────
+  //  CITY SKYLINE (right ~50%)
+  // ────────────────────────────────
+  const groundY = H * 0.87 - midOff;
+
+  for (const bld of BUILDINGS) {
+    const bx     = bld.x * W;
+    const bw     = bld.w * W;
+    const btop   = bld.y * H - midOff;
+    const bCols  = Math.max(1, Math.round(bw / CW));
+    const bRows  = Math.ceil((groundY - btop) / LH);
+
+    for (let row = 0; row < bRows; row++) {
+      const y = btop + row * LH;
+      if (y > H || y < 0) continue;
+      for (let col = 0; col < bCols; col++) {
+        const x = bx + col * CW;
+        let ch: string;
+        if (row === 0) {
+          ch = col === 0 ? '|' : col === bCols - 1 ? '|' : '-';
+        } else {
+          // Window pattern
+          const winRow = (row - 1) % 3;
+          const winCol = col % 2;
+          if (winRow === 1 && winCol === 0 && col > 0 && col < bCols - 1) {
+            // lit window (random flicker)
+            const lit = Math.sin(t * 0.0008 + bld.x * 50 + row * 7 + col) > 0.3;
+            ch = lit ? '▪' : '□';
+            ctx.fillStyle = lit ? '#ffe680' : '#334';
+            ctx.globalAlpha = lit ? 0.55 : 0.2;
+            ctx.fillText(ch, x, y);
+            continue;
+          } else {
+            ch = col === 0 || col === bCols - 1 ? '|' : ' ';
+          }
+        }
+        ctx.fillStyle = '#ff2d78';
+        ctx.globalAlpha = 0.22;
+        ctx.fillText(ch, x, y);
+      }
+    }
+
+    // Antenna
+    if (bld.antenna) {
+      ctx.fillStyle = '#ff2d78';
+      ctx.globalAlpha = 0.4;
+      const antennaX = bx + (bCols / 2) * CW;
+      ctx.fillText('|', antennaX, btop - LH);
+      ctx.fillText('*', antennaX, btop - LH * 2);
+    }
+  }
+
+  // Ground line
+  ctx.fillStyle = '#ff2d78';
+  ctx.globalAlpha = 0.18;
+  const groundLine = '-'.repeat(Math.ceil(W / CW) + 4);
+  ctx.fillText(groundLine, 0, groundY);
+
+  // ────────────────────────────────
+  //  LAKE (bottom)
+  // ────────────────────────────────
+  const lakeTop    = H * 0.87 - lakeOff;
+  const lakeRows   = Math.ceil((H - lakeTop + 60) / LH) + 2;
+  const waveWidth  = Math.ceil(W / CW) + 4;
+
+  for (let row = 0; row < lakeRows; row++) {
+    const y = lakeTop + row * LH;
+    if (y > H + LH) break;
+
+    // Alternate wave patterns, offset by time
+    const offset   = Math.round(Math.sin(waveT + row * 1.3) * 2);
+    const waveStr  = row % 3 === 0
+      ? '~'.repeat(waveWidth)
+      : row % 3 === 1
+        ? '≈'.repeat(waveWidth)
+        : ' '.repeat(Math.max(0, offset)) + '~'.repeat(waveWidth);
+
+    const depth = row / Math.max(lakeRows - 1, 1);
+    ctx.fillStyle = '#00f5ff';
+    ctx.globalAlpha = 0.06 + depth * 0.04;
+    ctx.fillText(waveStr, -offset * CW, y);
+  }
+
+  // Boats
+  for (const boat of BOATS) {
+    boat.x += boat.speed;
+    if (boat.x > 1.1) boat.x = -0.12;
+    if (boat.x < -0.15) boat.x = 1.08;
+
+    boat.bobPhase += 0.012;
+    const bob   = Math.sin(boat.bobPhase) * LH * 0.4;
+    const bx    = boat.x * W;
+    const by    = lakeTop + LH + bob;
+    if (by > H) continue;
+
+    ctx.fillStyle = '#ffe600';
+    ctx.globalAlpha = 0.55;
+    ctx.fillText('[===]', bx, by);
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 0.3;
+    ctx.fillText('  /\\  ', bx, by - LH);   // sail
+    ctx.fillText('  ||  ', bx, by - LH * 0.5);
+
+    // Reflection
+    ctx.fillStyle = '#ffe600';
+    ctx.globalAlpha = 0.12;
+    ctx.fillText('[===]', bx, by + LH);
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.textBaseline = 'alphabetic';
+}
+
+// ─────────────────────────────────────────────
+//  BG 4 — BUGS
+// ─────────────────────────────────────────────
+const BUG_CHARS   = ['ж', 'Ж', 'ψ', 'Ψ', 'ф', 'ω', 'Ω', '§'];
+const BUG_COLORS  = ['#00ff88', '#00f5ff', '#ffe600', '#b94fff', '#ff2d78'];
+const BUG_MAX     = 45;
+const CATCH_DIST  = 22; // px radius — touching the cursor triggers burrow
+
+type BugPhase = 'spawning' | 'burrowing' | 'waiting';
+
+interface BugObj {
+  x: number; y: number;
+  vx: number; vy: number;
+  char: string;
+  color: string;
+  speed: number;
+  size: number;
+  opacity: number;
+  wobble: number;
+  burrow: number;   // 0 = alive, 1 = fully burrowed
+}
+
+let bugList: BugObj[] = [];
+let bugPhase: BugPhase = 'waiting';
+let bugSpawnTimer = 0;
+let bugWaitTimer  = 0;
+
+function initBugs() {
+  bugList      = [];
+  bugPhase     = 'waiting';
+  bugWaitTimer = 80;
+  bugSpawnTimer = 0;
+}
+
+function spawnBug() {
+  const edge = Math.floor(Math.random() * 4);
+  let x: number, y: number;
+  if      (edge === 0) { x = Math.random() * W; y = -24; }
+  else if (edge === 1) { x = W + 24;            y = Math.random() * H; }
+  else if (edge === 2) { x = Math.random() * W; y = H + 24; }
+  else                 { x = -24;               y = Math.random() * H; }
+
+  bugList.push({
+    x, y, vx: 0, vy: 0,
+    char:    BUG_CHARS[Math.floor(Math.random() * BUG_CHARS.length)],
+    color:   BUG_COLORS[Math.floor(Math.random() * BUG_COLORS.length)],
+    speed:   0.35 + Math.random() * 0.75,
+    size:    13 + Math.random() * 9,
+    opacity: 0.6 + Math.random() * 0.4,
+    wobble:  Math.random() * Math.PI * 2,
+    burrow:  0,
+  });
+}
+
+function triggerBurrow() {
+  bugPhase = 'burrowing';
+  // Randomise burrow speeds so they don't all vanish simultaneously
+  for (const b of bugList) b.burrow = Math.random() * 0.15;
+}
+
+function drawBugs() {
+  ctx.clearRect(0, 0, W, H);
+
+  // ── Phase transitions ──
+  if (bugPhase === 'waiting') {
+    bugWaitTimer--;
+    if (bugWaitTimer <= 0) {
+      bugPhase      = 'spawning';
+      bugSpawnTimer = 50;
+    }
+  }
+
+  if (bugPhase === 'spawning') {
+    // Mouse left screen → burrow and restart
+    if (!mouseOnScreen && bugList.length > 0) {
+      triggerBurrow();
+    } else {
+      bugSpawnTimer--;
+      if (bugSpawnTimer <= 0 && bugList.length < BUG_MAX) {
+        spawnBug();
+        // Spawn rate tightens as the swarm grows
+        bugSpawnTimer = Math.max(14, 70 - bugList.length * 1.2);
+      }
+
+      // Move bugs toward mouse
+      let caught = false;
+      for (const b of bugList) {
+        b.wobble += 0.06;
+        const dx   = mouseX - b.x;
+        const dy   = mouseY - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+        // Gradual steering toward cursor
+        const tx = (dx / dist) * b.speed;
+        const ty = (dy / dist) * b.speed;
+        b.vx += (tx - b.vx) * 0.06;
+        b.vy += (ty - b.vy) * 0.06;
+        // Organic wobble
+        b.vx += Math.sin(b.wobble) * 0.08;
+        b.vy += Math.cos(b.wobble * 1.4) * 0.08;
+
+        b.x += b.vx;
+        b.y += b.vy;
+
+        if (dist < CATCH_DIST) caught = true;
+      }
+      if (caught) triggerBurrow();
+    }
+  }
+
+  if (bugPhase === 'burrowing') {
+    let allDone = true;
+    for (const b of bugList) {
+      b.burrow += 0.045 + Math.random() * 0.01;
+      if (b.burrow < 1) allDone = false;
+    }
+    if (allDone) {
+      bugList      = [];
+      bugPhase     = 'waiting';
+      bugWaitTimer = 100;
+    }
+  }
+
+  // ── Draw ──
+  ctx.textBaseline = 'middle';
+  for (const b of bugList) {
+    const scale = Math.max(0, 1 - b.burrow);
+    if (scale <= 0) continue;
+
+    const alpha = b.opacity * scale;
+    ctx.globalAlpha = alpha;
+    ctx.font = `bold ${b.size * scale}px "Courier New", monospace`;
+    ctx.fillStyle = b.color;
+
+    // Rotate to face direction of travel
+    const angle = Math.atan2(b.vy, b.vx);
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(angle);
+    ctx.fillText(b.char, -b.size * 0.25 * scale, 0);
+    ctx.restore();
+
+    // Faint glow shadow when close to burrowing
+    if (b.burrow > 0.5) {
+      ctx.globalAlpha = alpha * 0.4;
+      ctx.fillStyle = '#ffffff';
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(angle);
+      ctx.fillText(b.char, -b.size * 0.25 * scale, 0);
+      ctx.restore();
+    }
+  }
+
+  ctx.globalAlpha  = 1;
+  ctx.textBaseline = 'alphabetic';
+}
+
+// ─────────────────────────────────────────────
+//  Main loop
+// ─────────────────────────────────────────────
+initMatrix();
+initBugs();
+
+function loop(t: number) {
+  switch (current) {
+    case 'stars':     drawStars(t);     break;
+    case 'landscape': drawLandscape(t); break;
+    case 'matrix':    drawMatrix();     break;
+    case 'bugs':      drawBugs();       break;
+  }
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+</script>

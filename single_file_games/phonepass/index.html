@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>PhonePass</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      --gy: 50%;
+      background: linear-gradient(to bottom, #001535 0%, #2e1800 var(--gy), #2a0000 100%);
+      color: white;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body.team-blue {
+      background: linear-gradient(160deg, #003799 0%, #0051d4 50%, #002d80 100%);
+    }
+
+    body.team-red {
+      background: linear-gradient(160deg, #990000 0%, #cc0000 50%, #7a0000 100%);
+    }
+
+    body.team-gold {
+      background: linear-gradient(160deg, #7a5800 0%, #b07d00 50%, #5c4100 100%);
+    }
+
+    /* ---- SCREENS ---- */
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 440px;
+      padding: 24px;
+      gap: 16px;
+    }
+
+    .screen.active { display: flex; }
+
+    .screen-full {
+      height: 100vh;
+      height: 100dvh;
+      justify-content: space-between;
+      padding: 36px 24px 32px;
+    }
+
+    /* ---- GLASS ---- */
+    .glass {
+      background: rgba(255,255,255,0.11);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 24px;
+      padding: 28px 22px;
+      width: 100%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+
+    /* ---- FORM ELEMENTS ---- */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      opacity: 0.6;
+    }
+
+    .segment {
+      display: flex;
+      background: rgba(0,0,0,0.22);
+      border-radius: 12px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .segment button {
+      flex: 1;
+      padding: 10px 8px;
+      border: none;
+      border-radius: 9px;
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .segment button.active {
+      background: rgba(255,255,255,0.18);
+      color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    select {
+      width: 100%;
+      padding: 14px 40px 14px 16px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 14px;
+      background: rgba(0,0,0,0.22);
+      color: white;
+      font-size: 16px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+
+    select option { background: #2a2a40; color: white; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toggle-label { font-size: 16px; font-weight: 500; }
+
+    .toggle { position: relative; width: 51px; height: 31px; cursor: pointer; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.18);
+      border-radius: 31px;
+      transition: 0.3s;
+    }
+    .toggle-thumb {
+      position: absolute;
+      height: 25px; width: 25px;
+      left: 3px; bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .toggle input:checked ~ .toggle-track { background: rgba(52,199,89,0.85); }
+    .toggle input:checked ~ .toggle-thumb { transform: translateX(20px); }
+
+    .divider { width: 100%; height: 1px; background: rgba(255,255,255,0.1); }
+
+    /* ---- BUTTONS ---- */
+    .btn {
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: 18px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.1s, opacity 0.1s;
+      letter-spacing: -0.2px;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn-white {
+      background: rgba(255,255,255,0.92);
+      color: #1c1c2e;
+    }
+
+    .btn-white.blue { color: #002d80; }
+    .btn-white.red  { color: #7a0000; }
+
+    .btn-glass {
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.22);
+      color: white;
+    }
+
+    .btn-green {
+      background: rgba(52,199,89,0.82);
+      border: 1px solid rgba(52,199,89,0.4);
+      color: white;
+    }
+
+    .btn-red-action {
+      background: rgba(255,59,48,0.82);
+      border: 1px solid rgba(255,59,48,0.4);
+      color: white;
+    }
+
+    .btn-sm {
+      padding: 13px;
+      font-size: 15px;
+      border-radius: 14px;
+    }
+
+    .btn-disabled {
+      opacity: 0.3;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .btn-row { display: flex; gap: 12px; width: 100%; }
+
+    /* ---- SCORE BAR ---- */
+    .score-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 8px;
+    }
+
+    .score-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .score-name {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      opacity: 0.65;
+    }
+
+    .score-num {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+
+    .score-sep { font-size: 28px; opacity: 0.3; font-weight: 200; }
+
+    /* ---- CENTER BUTTON (orb) ---- */
+    .orb-btn {
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.28);
+      background: rgba(255,255,255,0.13);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: white;
+      font-size: 22px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.12s, background 0.12s;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.18);
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .orb-btn:active {
+      transform: scale(0.93);
+      background: rgba(255,255,255,0.22);
+    }
+
+    /* ---- WORD DISPLAY ---- */
+    .word-text {
+      font-size: 54px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      text-align: center;
+      line-height: 1.05;
+    }
+
+    /* ---- MISC ---- */
+    .team-label {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      opacity: 0.75;
+      text-align: center;
+    }
+
+    .mode-desc {
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.5;
+      opacity: 0.65;
+      padding: 4px 2px 0;
+    }
+
+    .hint-text {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.5;
+      text-align: center;
+    }
+
+    /* ---- OVERLAYS ---- */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 28px;
+    }
+
+    .overlay.hidden { display: none; }
+
+    .popup {
+      background: rgba(22,22,38,0.92);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 28px;
+      padding: 36px 26px;
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+    }
+
+    .popup-title {
+      font-size: 38px;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: -1px;
+      line-height: 1.1;
+    }
+
+    .popup-sub {
+      font-size: 16px;
+      text-align: center;
+      opacity: 0.72;
+      font-weight: 500;
+    }
+
+    .popup-word {
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+      padding: 14px 20px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      width: 100%;
+      letter-spacing: -0.5px;
+    }
+
+    .win-score-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      width: 100%;
+    }
+
+    .win-score-side { text-align: center; }
+    .win-score-name {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      opacity: 0.6;
+      margin-bottom: 2px;
+    }
+    .win-score-num {
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -3px;
+      line-height: 1;
+    }
+
+    h1 {
+      font-size: 46px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      text-align: center;
+    }
+
+    /* ======== MENU REDESIGN ======== */
+
+    #screen-menu {
+      overflow-y: auto;
+      height: 100vh;
+      height: 100dvh;
+      justify-content: flex-start;
+      padding: 52px 22px 40px;
+      gap: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .menu-title {
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -2.5px;
+      text-align: center;
+      margin-bottom: 4px;
+      background: linear-gradient(160deg, #ffffff 30%, rgba(255,255,255,0.55));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .menu-tagline {
+      font-size: 13px;
+      text-align: center;
+      opacity: 0.4;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    .menu-rules {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(40px) saturate(160%);
+      -webkit-backdrop-filter: blur(40px) saturate(160%);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 18px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.38);
+      margin-bottom: 26px;
+    }
+
+    .menu-rule {
+      font-size: 12px;
+      opacity: 0.55;
+      line-height: 1.45;
+      padding-left: 14px;
+      position: relative;
+    }
+
+    .menu-rule::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      opacity: 0.5;
+    }
+
+    .menu-section {
+      width: 100%;
+      margin-bottom: 22px;
+    }
+
+    .menu-section-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      opacity: 0.45;
+      margin-bottom: 10px;
+      padding-left: 2px;
+    }
+
+    /* Mode cards */
+    .mode-cards-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .mode-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 20px 10px 16px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(40px) saturate(160%);
+      -webkit-backdrop-filter: blur(40px) saturate(160%);
+      cursor: pointer;
+      transition: all 0.22s;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -1px 0 rgba(0,0,0,0.06);
+    }
+
+    .mode-card.selected {
+      border-color: rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.22);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(0,0,0,0.08);
+    }
+
+    .mode-card-icon { font-size: 34px; line-height: 1; }
+
+    .mode-card-name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+
+    .mode-card-tag {
+      font-size: 11px;
+      opacity: 0.5;
+      font-weight: 500;
+    }
+
+    .mode-desc-box {
+      display: none;
+      font-size: 12px;
+      opacity: 0.7;
+      line-height: 1.55;
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.09);
+      backdrop-filter: blur(40px) saturate(160%);
+      -webkit-backdrop-filter: blur(40px) saturate(160%);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 13px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+
+    .mode-desc-box.visible { display: block; }
+
+    /* Divider */
+    .h-sep {
+      width: 100%;
+      height: 1px;
+      background: rgba(255,255,255,0.09);
+      margin: 4px 0 22px;
+    }
+
+    /* Category cards */
+    .cat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+    }
+
+    .cat-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(40px) saturate(160%);
+      -webkit-backdrop-filter: blur(40px) saturate(160%);
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.36), inset 0 -1px 0 rgba(0,0,0,0.05);
+    }
+
+    .cat-card.selected {
+      border-color: rgba(255,255,255,0.52);
+      background: rgba(255,255,255,0.22);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(0,0,0,0.08);
+    }
+
+    /* "Random" card spans full width */
+    .cat-card.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .cat-icon { font-size: 20px; line-height: 1; flex-shrink: 0; }
+
+    .cat-name {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    /* Sound card */
+    .sound-card {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 20px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(40px) saturate(160%);
+      -webkit-backdrop-filter: blur(40px) saturate(160%);
+      cursor: pointer;
+      transition: all 0.25s;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -1px 0 rgba(0,0,0,0.06);
+    }
+
+    .sound-card.on {
+      border-color: rgba(52,199,89,0.5);
+      background: rgba(52,199,89,0.14);
+      box-shadow: 0 2px 24px rgba(52,199,89,0.12), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(0,0,0,0.05);
+    }
+
+    .sound-big-icon {
+      font-size: 38px;
+      line-height: 1;
+      width: 50px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .sound-text { flex: 1; }
+
+    .sound-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 2px;
+    }
+
+    .sound-status {
+      font-size: 13px;
+      opacity: 0.55;
+      font-weight: 500;
+    }
+
+    .sound-pip {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+      transition: background 0.3s, box-shadow 0.3s;
+      flex-shrink: 0;
+    }
+
+    .sound-card.on .sound-pip {
+      background: rgb(52,199,89);
+      box-shadow: 0 0 10px rgba(52,199,89,0.7);
+    }
+
+    /* Custom words overlay */
+    .custom-prompt-box {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s;
+    }
+    .custom-prompt-box:active { background: rgba(255,255,255,0.14); }
+    .custom-prompt-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      opacity: 0.45;
+      margin-bottom: 5px;
+    }
+    .custom-prompt-text {
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.45;
+      opacity: 0.85;
+    }
+    .custom-prompt-copied {
+      position: absolute;
+      top: 10px; right: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgb(52,199,89);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .custom-prompt-copied.show { opacity: 1; }
+
+    .custom-textarea {
+      width: 100%;
+      min-height: 110px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      color: white;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+      line-height: 1.5;
+    }
+    .custom-textarea::placeholder { opacity: 0.4; }
+    .custom-textarea:focus { border-color: rgba(255,255,255,0.4); }
+
+    .custom-count {
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0.6;
+      text-align: center;
+    }
+    .custom-count.has-words { opacity: 1; color: rgb(52,199,89); }
+
+    /* Start button */
+    .btn-start {
+      width: 100%;
+      padding: 20px;
+      border: none;
+      border-radius: 20px;
+      font-size: 19px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: -0.4px;
+      background: rgba(255,255,255,0.92);
+      color: #08052a;
+      transition: transform 0.12s, box-shadow 0.12s;
+      box-shadow: 0 6px 32px rgba(0,0,0,0.35);
+    }
+
+    .btn-start:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ======= MENU SCREEN ======= -->
+<div id="screen-menu" class="screen active">
+
+  <h1 class="menu-title">PhonePass</h1>
+  <!-- <p class="menu-tagline">The hot potato word game</p> -->
+
+  <div class="menu-rules">
+    <div class="menu-rule">No saying any word that makes up the assigned word — violators must skip. If your skip is gone, wait it out and lose a point.</div>
+    <div class="menu-rule">Heckling from inactive players is encouraged.</div>
+    <div class="menu-rule">Pass the phone immediately after pressing GOT IT.</div>
+  </div>
+
+  <!-- Game Mode -->
+  <div class="menu-section">
+    <div class="menu-section-title">Game Mode</div>
+    <div class="mode-cards-row">
+      <div class="mode-card selected" id="card-mode-team" onclick="selectMode('team')">
+        <div class="mode-card-icon">👥</div>
+        <div class="mode-card-name">Team</div>
+        <div class="mode-card-tag">Blue vs Red · First to 7</div>
+      </div>
+      <div class="mode-card" id="card-mode-elim" onclick="selectMode('elimination')">
+        <div class="mode-card-icon">⚡</div>
+        <div class="mode-card-name">Elimination</div>
+        <div class="mode-card-tag">Last one standing</div>
+      </div>
+    </div>
+    <div id="mode-desc-team" class="mode-desc-box visible">Divide so every other player is on the same team — Blue vs Red. Blue goes first. Even number required; odd groups can have two players share one turn. First to 7 points wins.</div>
+    <div id="mode-desc-elim" class="mode-desc-box">Sit in a circle. The phone holder must get the person <strong>two spots to their left</strong> to say the word — only that player's guess counts. If time runs out on that pair, both are eliminated. Once 3–4 players remain, all eliminated players become the guesser pool and only the phone holder is at risk each round. Last player standing wins.</div>
+  </div>
+
+  <div class="h-sep"></div>
+
+  <!-- Category -->
+  <div class="menu-section">
+    <div class="menu-section-title">Category</div>
+    <div class="cat-grid">
+      <div class="cat-card full-width selected" id="cat-random" onclick="selectCategory('random')">
+        <span class="cat-icon">🎲</span><span class="cat-name">Random — Everything</span>
+      </div>
+      <div class="cat-card" id="cat-movies" onclick="selectCategory('movies')">
+        <span class="cat-icon">🎬</span><span class="cat-name">Movie‑Verse</span>
+      </div>
+      <div class="cat-card" id="cat-verbs" onclick="selectCategory('verbs')">
+        <span class="cat-icon">🏃</span><span class="cat-name">Verbs</span>
+      </div>
+      <div class="cat-card" id="cat-compound" onclick="selectCategory('compound')">
+        <span class="cat-icon">🔗</span><span class="cat-name">Compound Words</span>
+      </div>
+      <div class="cat-card" id="cat-personplacething" onclick="selectCategory('personplacething')">
+        <span class="cat-icon">🗺️</span><span class="cat-name">Person, Place, or Thing</span>
+      </div>
+      <div class="cat-card full-width" id="cat-custom" onclick="openCustomWords()">
+        <span class="cat-icon">✏️</span><span class="cat-name">Use Your Own Words</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="h-sep"></div>
+
+  <!-- Sound -->
+  <div class="sound-card" id="sound-card" onclick="toggleSoundCard()">
+    <div class="sound-big-icon" id="sound-icon">🔇</div>
+    <div class="sound-text">
+      <div class="sound-title">Sound Effects</div>
+      <div class="sound-status" id="sound-status">OFF — tap to enable beeping</div>
+    </div>
+    <div class="sound-pip" id="sound-pip"></div>
+  </div>
+
+  <button class="btn-start" onclick="startGame()">Start Game →</button>
+
+</div>
+
+<!-- ======= IDLE SCREEN (BEGIN / NEW WORD) ======= -->
+<div id="screen-idle" class="screen screen-full">
+  <!-- Top: scores (team) or menu button (elimination) -->
+  <div id="idle-top-team" class="score-bar">
+    <div class="score-side">
+      <div class="score-name">Blue</div>
+      <div class="score-num" id="idle-blue">0</div>
+    </div>
+    <div class="score-sep">:</div>
+    <div class="score-side">
+      <div class="score-name">Red</div>
+      <div class="score-num" id="idle-red">0</div>
+    </div>
+  </div>
+  <div id="idle-top-elim" style="display:none;width:100%;">
+    <button class="btn btn-glass btn-sm" onclick="confirmMenu()">← Menu</button>
+  </div>
+
+  <!-- Middle: orb -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+    <div class="team-label" id="idle-team-label">Blue Team</div>
+    <button class="orb-btn" id="idle-orb" onclick="handleOrbPress()">BEGIN</button>
+    <div class="hint-text" id="idle-hint"></div>
+  </div>
+
+  <!-- Bottom: back (team mode only — elimination has the top button) -->
+  <button class="btn btn-glass btn-sm" id="idle-bottom-menu" onclick="goToMenu()">← Menu</button>
+</div>
+
+<!-- ======= ACTIVE SCREEN (word + timer) ======= -->
+<div id="screen-active" class="screen screen-full">
+  <!-- Top: scores (team) or menu button (elimination) -->
+  <div id="active-top-team" class="score-bar">
+    <div class="score-side">
+      <div class="score-name">Blue</div>
+      <div class="score-num" id="active-blue">0</div>
+    </div>
+    <div class="score-sep">:</div>
+    <div class="score-side">
+      <div class="score-name">Red</div>
+      <div class="score-num" id="active-red">0</div>
+    </div>
+  </div>
+  <div id="active-top-elim" style="display:none;width:100%;">
+    <button class="btn btn-glass btn-sm" onclick="confirmMenu()">← Menu</button>
+  </div>
+
+  <!-- Middle: word -->
+  <div class="word-text" id="active-word">WORD</div>
+
+  <!-- Bottom: buttons -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:440px;">
+    <button class="btn btn-white" id="got-it-btn" onclick="gotIt()">GOT IT ✓</button>
+    <button class="btn btn-glass btn-sm" id="skip-btn" onclick="skipWord()">Skip</button>
+  </div>
+</div>
+
+<!-- ======= OVERLAY: ROUND LOST ======= -->
+<div id="overlay-lost" class="overlay hidden">
+  <div class="popup">
+    <div class="popup-title">⏰ TIME'S UP!</div>
+    <div class="popup-sub" id="lost-sub">Blue Team loses this round</div>
+    <div id="lost-guess-section">
+      <div class="popup-word" id="lost-word">WORD</div>
+      <div class="popup-sub">Can the other team guess it?</div>
+      <div class="btn-row">
+        <button class="btn btn-green btn-sm" onclick="handleOtherTeamGuess(true)">YES  +2</button>
+        <button class="btn btn-red-action btn-sm" onclick="handleOtherTeamGuess(false)">NO  +1</button>
+      </div>
+    </div>
+    <div id="lost-pass-section" style="display:none;width:100%;">
+      <button class="btn btn-glass" onclick="handleMidPassLoss()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= OVERLAY: CUSTOM WORDS ======= -->
+<div id="overlay-custom" class="overlay hidden">
+  <div class="popup" style="gap:14px;">
+    <div class="popup-title" style="font-size:24px;">✏️ Your Words</div>
+
+    <div class="custom-prompt-box" onclick="copyPrompt(this)">
+      <div class="custom-prompt-label">Tap to copy AI prompt</div>
+      <div class="custom-prompt-text">Give me 100 comma separated words on the topic: ____</div>
+      <div class="custom-prompt-copied" id="prompt-copied">Copied!</div>
+    </div>
+    <div style="font-size:12px;opacity:0.5;text-align:center;margin-top:-6px;">try asking AI for words on any topic!</div>
+
+    <textarea
+      id="custom-words-input"
+      class="custom-textarea"
+      placeholder="Paste or type your comma-separated words here..."
+      oninput="onCustomInput(this.value)"
+    ></textarea>
+
+    <div id="custom-word-count" class="custom-count">0 words detected</div>
+
+    <div class="btn-row">
+      <button class="btn btn-glass btn-sm" onclick="closeCustomWords()">Cancel</button>
+      <button class="btn btn-green btn-sm" id="custom-submit" onclick="submitCustomWords()" disabled>Use These Words</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= OVERLAY: CONFIRM MENU ======= -->
+<div id="overlay-confirm" class="overlay hidden">
+  <div class="popup">
+    <div class="popup-title" style="font-size:28px;">Return to Menu?</div>
+    <div class="popup-sub">The current game will be lost.</div>
+    <div class="btn-row">
+      <button class="btn btn-red-action btn-sm" onclick="goToMenu()">Yes, Exit</button>
+      <button class="btn btn-glass btn-sm" onclick="document.getElementById('overlay-confirm').classList.add('hidden')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= OVERLAY: WIN ======= -->
+<div id="overlay-win" class="overlay hidden">
+  <div class="popup">
+    <div class="popup-title" id="win-title">🎉 Blue Team Wins!</div>
+    <div class="win-score-row">
+      <div class="win-score-side">
+        <div class="win-score-name">Blue</div>
+        <div class="win-score-num" id="win-blue">0</div>
+      </div>
+      <div style="font-size:30px;opacity:0.3;">:</div>
+      <div class="win-score-side">
+        <div class="win-score-name">Red</div>
+        <div class="win-score-num" id="win-red">0</div>
+      </div>
+    </div>
+    <button class="btn btn-glass" onclick="goToMenu()" style="margin-top:4px;">Return to Menu</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  WORD LISTS
+// ============================================================
+const WORDS = {
+  movies: [
+    // Titles
+    "Star Wars","The Matrix","Titanic","Avatar","Inception","Jaws","Frozen","Shrek",
+    "Batman","Spider-Man","The Avengers","Jurassic Park","The Lion King","Finding Nemo",
+    "Toy Story","Forrest Gump","The Godfather","Pulp Fiction","Home Alone","E.T.",
+    "Ghostbusters","Top Gun","Die Hard","Rocky","Terminator","Back to the Future",
+    "Indiana Jones","Grease","Wizard of Oz","Harry Potter","Lord of the Rings",
+    "The Hunger Games","Interstellar","Up","WALL-E","Coco","Moana","Encanto",
+    "Black Panther","Iron Man","Thor","Guardians of the Galaxy","The Little Mermaid",
+    "Aladdin","Beauty and the Beast","Mulan","Zootopia","Inside Out","Brave",
+    "Ratatouille","The Incredibles","Monsters Inc","Elf","Mean Girls","Beetlejuice",
+    "Hocus Pocus","Clueless","Ferris Bueller","The Breakfast Club","Dirty Dancing",
+    "Goodfellas","Scarface","The Dark Knight","Gladiator","Braveheart","Joker",
+    "A Quiet Place","Get Out","Us","Knives Out","Parasite","Oppenheimer","Barbie",
+    "Dune","No Time to Die","Everything Everywhere","Nope","Tenet","1917",
+    "Whiplash","La La Land","Her","Arrival","The Revenant","Mad Max Fury Road",
+    "John Wick","Mission Impossible","Fast and Furious","Transformers","Minions",
+    "Despicable Me","Sing","The Lorax","Puss in Boots","Turning Red","Lightyear",
+    "Strange World","Wish","Elemental","Soul","Onward","Luca",
+    "Mamma Mia","Bohemian Rhapsody","Rocketman","Elvis","A Star is Born",
+    "The Notebook","Crazy Rich Asians","Bridesmaids","The Proposal","Legally Blonde",
+    "Pretty Woman","10 Things I Hate","She's All That","Never Been Kissed",
+    "Pitch Perfect","Step Brothers","Superbad","Pineapple Express","The Hangover",
+    "Wedding Crashers","Anchorman","Blades of Glory","Talladega Nights",
+    "Dumb and Dumber","Ace Ventura","Liar Liar","Bruce Almighty","The Mask",
+    "Edward Scissorhands","Tim Burton's Batman","Beetlejuice","Big Fish",
+    "Nightmare Before Christmas","Corpse Bride","Coraline","ParaNorman",
+    "Kubo Two Strings","The Boxtrolls","Isle of Dogs","Fantastic Mr Fox",
+    "Wes Anderson","The Grand Budapest","Moonrise Kingdom","Rushmore",
+    "Schindler's List","Saving Private Ryan","Hacksaw Ridge","Dunkirk",
+    "Full Metal Jacket","Platoon","Apocalypse Now","The Deer Hunter",
+    "Good Will Hunting","Dead Poets Society","The Truman Show","Cast Away",
+    "What's Eating Gilbert","Pay It Forward","A Beautiful Mind",
+    // Phrases / quotes / characters
+    "I'll be back","May the Force","You can't handle the truth",
+    "Just keep swimming","To infinity and beyond","Here's looking at you",
+    "You had me at hello","I see dead people","Life is like chocolates",
+    "King of the world","Nobody puts Baby","One does not simply",
+    "They're not gonna get us","Why so serious","Elementary my dear Watson",
+    "Hasta la vista baby","It's a trap","Great Scott","Roads less traveled",
+    "Hello Clarice","Bond James Bond","Live long and prosper","Beam me up",
+    "My precious","The stuff of dreams","I am your father","Phone home"
+  ],
+  verbs: [
+    // Single action verbs
+    "Running","Swimming","Jumping","Dancing","Singing","Cooking","Painting","Writing",
+    "Reading","Climbing","Skiing","Surfing","Laughing","Crying","Sleeping","Eating",
+    "Driving","Flying","Whispering","Shouting","Crawling","Spinning","Throwing",
+    "Catching","Building","Digging","Planting","Teaching","Sneezing","Yawning",
+    "Stretching","Whistling","Juggling","Skateboarding","Snorkeling","Blinking",
+    "Galloping","Pedaling","Rowing","Sculpting","Knitting","Balancing","Tiptoeing",
+    "Somersaulting","Braiding","Winking","Scribbling","Mumbling","Shrugging",
+    "Stumbling","Slouching","Flexing","Waving","Pointing","Clapping",
+    "Meditating","Hibernating","Procrastinating","Eavesdropping","Contemplating",
+    "Improvising","Negotiating","Photobombing","Multitasking","Daydreaming",
+    "Napping","Sprinting","Leaping","Pouncing","Waddling","Strutting","Sauntering",
+    "Sneaking","Dashing","Zooming","Hovering","Gliding","Soaring","Plummeting",
+    "Cartwheeling","Backflipping","Moonwalking","Breakdancing","Twerking","Hula hooping",
+    "Arm wrestling","Thumb wrestling","Staring contest","Playing possum",
+    "Belly flopping","Cannonballing","Marco Polo","Freeze tag","Hide and seek",
+    "Limbo dancing","Hula dancing","Tap dancing","Belly dancing","Line dancing",
+    "Speed reading","Speed dating","Window shopping","People watching","Cloud watching",
+    "Stargazing","Birdwatching","Bug hunting","Rock skipping","Leaf blowing",
+    "Snow shoveling","Raking leaves","Mowing grass","Trimming hedges",
+    "Watering plants","Pulling weeds","Composting","Recycling","Dumpster diving",
+    "Freeclimbing","Bungee jumping","Skydiving","Parasailing","Hang gliding",
+    "White water rafting","Cave diving","Cliff jumping","Storm chasing",
+    // Verb phrases
+    "Doing the worm","Running in place","Chasing your tail","Spinning in circles",
+    "Walking the plank","Pulling a hamstring","Throwing shade","Catching feelings",
+    "Eating crow","Biting the bullet","Jumping the gun","Running the bases",
+    "Throwing a curveball","Catching a break","Hitting the wall","Climbing the ladder",
+    "Dropping the ball","Kicking the bucket","Pushing your luck","Breaking the ice",
+    "Burning bridges","Cutting corners","Dragging your feet","Holding your breath",
+    "Biting your nails","Crossing your fingers","Rolling your eyes","Raising the bar"
+  ],
+  compound: [
+    // Single compound words
+    "Sunshine","Raincoat","Butterfly","Starfish","Bookshelf","Doorbell","Fireplace",
+    "Lighthouse","Snowball","Thunderstorm","Waterfall","Moonlight","Haircut","Keyboard",
+    "Backpack","Footprint","Toothbrush","Sunflower","Daydream","Skateboard","Honeybee",
+    "Cupcake","Popcorn","Headphones","Crossword","Horseback","Brainstorm","Countdown",
+    "Firefly","Grasshopper","Jellyfish","Ladybug","Overalls","Rainforest","Sandcastle",
+    "Seashell","Skyscraper","Snowflake","Sunscreen","Teamwork","Thunderbolt",
+    "Toothpaste","Watermelon","Windmill","Yearbook","Campfire","Beehive","Catfish",
+    "Dragonfly","Flagpole","Gemstone","Hammock","Iceberg","Bookmark","Cornfield",
+    "Driftwood","Eggshell","Footstep","Goldfish",
+    "Airplane","Airport","Armchair","Armpit","Backbone","Backseat","Backyard",
+    "Baseball","Basketball","Bathroom","Bedroom","Birdhouse","Blackbird","Blackboard",
+    "Bluebird","Blueberry","Bookworm","Brainstorm","Breakfast","Bullfrog","Butterfly",
+    "Candlelight","Catnap","Checkmark","Cheeseburger","Clockwork","Cobweb",
+    "Cookbook","Corndog","Cupcake","Daydream","Deadline","Dewdrop","Doorstep",
+    "Downfall","Downtown","Drawback","Driveway","Dropout","Dustpan","Eardrum",
+    "Earring","Earthquake","Eyelid","Eyelash","Eyebrow","Fairground","Fallout",
+    "Fingernail","Fingerprint","Fireman","Firework","Flashlight","Foothold",
+    "Forehead","Frostbite","Grapevine","Groundwork","Hallway","Handshake",
+    "Hardwood","Headband","Headlight","Heartbeat","Highlight","Homework",
+    "Horsepower","Hotdog","Household","Hummingbird","Jackpot","Jellybean",
+    "Kneecap","Landmark","Landfill","Landlord","Landscape","Laptop","Lawnmower",
+    "Lifeboat","Lipstick","Mailbox","Mainstream","Makeshift","Milkshake",
+    "Moonwalk","Motorcycle","Mudslide","Nightmare","Notebook","Outfield",
+    "Outlet","Overboard","Overpass","Parachute","Pancake","Passport","Patchwork",
+    "Peppermint","Pillowcase","Pinecone","Pipeline","Pitchfork","Playground",
+    "Plywood","Quicksand","Railroad","Rainbow","Rainfall","Rainwater","Rearview",
+    "Roadblock","Rooftop","Rowboat","Runway","Safeguard","Sailboat","Scarecrow",
+    "Shipwreck","Shortcut","Sidewalk","Signpost","Skateboard","Snowboard",
+    "Softball","Soundtrack","Spotlight","Springboard","Staircase","Starlight",
+    "Stopwatch","Streetcar","Sunburn","Sunglasses","Sunrise","Sunset","Surfboard",
+    "Sweetheart","Tailgate","Tailwind","Textbook","Thundercloud","Tightrope",
+    "Timestamp","Toadstool","Toolbox","Touchdown","Treetop","Turnpike","Upside",
+    "Uptown","Vineyard","Volleyball","Wardrobe","Watchdog","Wavelength","Webcast",
+    "Weekday","Weekend","Whirlpool","Whirlwind","Wildfire","Windshield","Wishbone",
+    "Woodpecker","Workshop","Worldwide","Wristwatch",
+    // Compound phrases (two-word concepts that feel compound)
+    "Bowling alley","Coffee shop","Food court","Game night","Ghost town",
+    "Half time","Ice cream","Junk food","Knee high","Left field","Lost cause",
+    "Mind blown","Neck tie","Old school","Pep talk","Quick sand","Road trip",
+    "Short stack","Slam dunk","Snap chat","Speed bump","Split ends","Team player",
+    "Time out","Trade mark","Wake up call","Wild card","Wind farm","Wish list"
+  ],
+  personplacething: [
+    // People
+    "Napoleon","Shakespeare","Cleopatra","Einstein","Columbus","Beethoven",
+    "Gandhi","Da Vinci","Aristotle","Picasso","Socrates","Joan of Arc",
+    "Marie Curie","Abraham Lincoln","George Washington","Julius Caesar",
+    "Alexander the Great","Genghis Khan","Marco Polo","Nikola Tesla",
+    "Thomas Edison","Isaac Newton","Charles Darwin","Sigmund Freud",
+    "Karl Marx","Winston Churchill","Adolf Hitler","Mao Zedong","Joseph Stalin",
+    "Nelson Mandela","Martin Luther King","Malala Yousafzai","Mother Teresa",
+    "Princess Diana","Queen Elizabeth","King Henry VIII","Anne Boleyn",
+    "Amelia Earhart","Neil Armstrong","Buzz Aldrin","Yuri Gagarin",
+    "Elvis Presley","Michael Jackson","Marilyn Monroe","Audrey Hepburn",
+    "Bruce Lee","Muhammad Ali","Michael Jordan","Serena Williams","Usain Bolt",
+    "Tiger Woods","Wayne Gretzky","Pelé","Lionel Messi","Cristiano Ronaldo",
+    "LeBron James","Tom Brady","Babe Ruth","Billie Jean King",
+    // Places
+    "Amazon River","Mount Everest","Niagara Falls","Sahara Desert","Grand Canyon",
+    "Victoria Falls","Great Wall","Eiffel Tower","Stonehenge","Pyramid",
+    "Colosseum","Machu Picchu","Angkor Wat","Taj Mahal","Chichen Itza",
+    "Easter Island","Petra Jordan","Great Barrier Reef","Dead Sea","Black Sea",
+    "Mediterranean Sea","Pacific Ocean","Atlantic Ocean","Arctic Ocean",
+    "Nile River","Mississippi River","Amazon Jungle","Serengeti","Sahara",
+    "Antarctica","North Pole","South Pole","Bermuda Triangle","Area 51",
+    "Las Vegas Strip","Times Square","Wall Street","Hollywood Hills",
+    "Silicon Valley","Napa Valley","Death Valley","Yosemite","Yellowstone",
+    "Mount Rushmore","Alcatraz","Statue of Liberty","Big Ben","Buckingham Palace",
+    "Vatican City","Louvre Museum","Sydney Opera House","Leaning Tower",
+    // Things
+    "Telescope","Umbrella","Parachute","Submarine","Compass","Microscope",
+    "Helicopter","Camera","Calendar","Hourglass","Typewriter","Binoculars",
+    "Boomerang","Lasso","Sarcophagus","Catapult","Guillotine","Labyrinth",
+    "Sombrero","Igloo","Tundra","Volcano","Kangaroo","Sphinx","Tornado",
+    "Diamond","Mammoth","Samurai","Astronaut","Piano","Quicksand",
+    "Accordion","Anchor","Anvil","Archway","Bayonet","Bellows","Blimp",
+    "Candelabra","Cannon","Cauldron","Chalice","Chandelier","Clocktower",
+    "Cobblestone","Coffin","Constellation","Crossbow","Crown","Dagger",
+    "Dirigible","Dungeon","Dynamite","Escalator","Flagpole","Furnace",
+    "Gallows","Geyser","Glacier","Globe","Goblet","Gondola","Guillotine",
+    "Harmonica","Harpoon","Hieroglyphic","Hot air balloon","Iceberg",
+    "Kaleidoscope","Lute","Magnet","Maze","Moat","Mummy","Musket",
+    "Obelisk","Organ","Parchment","Periscope","Plague","Porthole",
+    "Pulley","Quill","Quicksand","Raft","Rampart","Scythe","Sextant",
+    "Shield","Shipwreck","Silo","Siren","Skeleton key","Slingshot",
+    "Spyglass","Stalactite","Stalagmite","Stethoscope","Sundial","Tapestry",
+    "Trebuchet","Trident","Trophy","Tumbleweed","Turret","Vending machine",
+    "Vial","Viking ship","Watchtower","Weather vane","Whip","Windlass",
+    // Phrases (person + descriptor, place description, etc.)
+    "Black hole","Solar system","Milky Way","Northern Lights","Dead Sea Scrolls",
+    "Great Fire","Trojan horse","Fountain of youth","Lost city","Seventh wonder",
+    "Twin towers","Golden Gate","Mount Olympus","Silk Road","Bermuda Triangle",
+    "Area fifty one","Rosetta Stone","Pandora's box","Achilles heel","Trojan War",
+    "Dark matter","Tidal wave","Solar eclipse","Lunar eclipse","Ice age",
+    "Food chain","Chain reaction","Domino effect","Butterfly effect","Ripple effect",
+    "Checkered flag","Red carpet","Blue ribbon","Gold medal","Silver bullet"
+  ]
+};
+WORDS.random = [
+  ...WORDS.movies, ...WORDS.verbs, ...WORDS.compound, ...WORDS.personplacething
+];
+
+// ============================================================
+//  STATE
+// ============================================================
+let gameMode     = 'team';
+let category     = 'random';
+let soundEnabled = false;
+let audioCtx     = null;
+
+let scores       = { blue: 0, red: 0 };
+let currentTeam  = 'blue';
+let currentWord  = '';
+let skipUsed     = false;
+let timerDuration = 45;
+let timerStart   = 0;
+let timerInterval = null;
+let beepTimeout  = null;
+let usedWords    = [];
+let idleMode     = 'begin'; // 'begin' | 'newword'
+let roundActive  = false;
+
+const WIN_SCORE  = 7;
+
+// ============================================================
+//  AUDIO
+// ============================================================
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playBeep(freq = 880, dur = 80, vol = 0.4) {
+  if (!soundEnabled || !audioCtx) return;
+  try {
+    const osc  = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur / 1000);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur / 1000 + 0.01);
+  } catch(e) {}
+}
+
+function playAlarm() {
+  [0, 180, 360].forEach(d => setTimeout(() => playBeep(440, 350, 0.6), d));
+}
+
+function scheduleBeep() {
+  if (!soundEnabled) return;
+  const elapsed  = (Date.now() - timerStart) / 1000;
+  const remaining = timerDuration - elapsed;
+  if (remaining <= 0) return;
+
+  const progress = Math.min(elapsed / timerDuration, 1);
+  const interval = Math.max(150, 2100 * (1 - progress * 0.92)); // 2100ms → ~168ms
+  const pitch    = 500 + progress * 700; // 500hz → 1200hz
+  playBeep(pitch, 70, 0.35);
+  beepTimeout = setTimeout(scheduleBeep, interval);
+}
+
+function stopBeeping() {
+  clearTimeout(beepTimeout);
+  beepTimeout = null;
+}
+
+// ============================================================
+//  WORDS
+// ============================================================
+function getWord() {
+  const pool = WORDS[category];
+  if (!pool || pool.length === 0) return '(no words — add some!)';
+  let available = pool.filter(w => !usedWords.includes(w));
+  if (available.length === 0) { usedWords = []; available = pool; }
+  const w = available[Math.floor(Math.random() * available.length)];
+  usedWords.push(w);
+  return w;
+}
+
+// ============================================================
+//  SCREEN HELPERS
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function setTeamBg(team) {
+  document.body.classList.remove('team-blue', 'team-red', 'team-gold');
+  if (team) document.body.classList.add('team-' + team);
+}
+
+function updateScores() {
+  ['idle','active'].forEach(p => {
+    const b = document.getElementById(p + '-blue');
+    const r = document.getElementById(p + '-red');
+    if (b) b.textContent = scores.blue;
+    if (r) r.textContent = scores.red;
+  });
+}
+
+// ============================================================
+//  MENU
+// ============================================================
+function selectMode(mode) {
+  gameMode = mode;
+  document.getElementById('card-mode-team').classList.toggle('selected', mode === 'team');
+  document.getElementById('card-mode-elim').classList.toggle('selected', mode === 'elimination');
+  document.getElementById('mode-desc-team').classList.toggle('visible', mode === 'team');
+  document.getElementById('mode-desc-elim').classList.toggle('visible', mode === 'elimination');
+}
+
+function selectCategory(cat) {
+  category = cat;
+  ['random','movies','verbs','compound','personplacething','custom'].forEach(id => {
+    document.getElementById('cat-' + id).classList.toggle('selected', id === cat);
+  });
+}
+
+function openCustomWords() {
+  document.getElementById('overlay-custom').classList.remove('hidden');
+  document.getElementById('custom-words-input').focus();
+}
+
+function closeCustomWords() {
+  document.getElementById('overlay-custom').classList.add('hidden');
+}
+
+function onCustomInput(val) {
+  const words = val.split(',').map(w => w.trim()).filter(w => w.length > 0);
+  const count = words.length;
+  const el = document.getElementById('custom-word-count');
+  el.textContent = count === 0 ? '0 words detected' : `${count} word${count === 1 ? '' : 's'} detected`;
+  el.classList.toggle('has-words', count > 0);
+  document.getElementById('custom-submit').disabled = count === 0;
+}
+
+function submitCustomWords() {
+  const val = document.getElementById('custom-words-input').value;
+  const words = val.split(',').map(w => w.trim()).filter(w => w.length > 0);
+  if (words.length === 0) return;
+  WORDS.custom = words;
+  selectCategory('custom');
+  closeCustomWords();
+}
+
+function copyPrompt(el) {
+  const text = 'Give me 100 comma separated words on the topic: ____';
+  const copied = document.getElementById('prompt-copied');
+
+  // Try modern API first, fall back to execCommand for non-HTTPS / older browsers
+  const finish = () => {
+    copied.classList.add('show');
+    setTimeout(() => copied.classList.remove('show'), 1800);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(finish).catch(() => fallbackCopy(text, finish));
+  } else {
+    fallbackCopy(text, finish);
+  }
+}
+
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  if (cb) cb();
+}
+
+function toggleSoundCard() {
+  soundEnabled = !soundEnabled;
+  if (soundEnabled) initAudio();
+  const card = document.getElementById('sound-card');
+  card.classList.toggle('on', soundEnabled);
+  document.getElementById('sound-icon').textContent   = soundEnabled ? '🔊' : '🔇';
+  document.getElementById('sound-status').textContent = soundEnabled ? 'ON — beeping enabled' : 'OFF — tap to enable beeping';
+}
+
+function confirmMenu() {
+  document.getElementById('overlay-confirm').classList.remove('hidden');
+}
+
+function startGame() {
+  stopMenuTracking();
+  if (soundEnabled) initAudio();
+  // category is already set by selectCategory()
+  scores      = { blue: 0, red: 0 };
+  currentTeam = 'blue';
+  usedWords   = [];
+  skipUsed    = false;
+  idleMode    = 'begin';
+  roundActive = false;
+
+  const isElim = gameMode === 'elimination';
+  ['idle','active'].forEach(p => {
+    document.getElementById(p + '-top-team').style.display = isElim ? 'none' : '';
+    document.getElementById(p + '-top-elim').style.display = isElim ? 'block' : 'none';
+  });
+  document.getElementById('idle-bottom-menu').style.display = isElim ? 'none' : '';
+
+  setTeamBg(gameMode === 'elimination' ? 'gold' : 'blue');
+  updateScores();
+  showIdle();
+}
+
+// ============================================================
+//  MENU BACKGROUND POINTER TRACKING
+// ============================================================
+function onMenuPointer(e) {
+  const y = e.touches ? e.touches[0].clientY : e.clientY;
+  const pct = Math.round((y / window.innerHeight) * 100);
+  document.body.style.setProperty('--gy', pct + '%');
+}
+
+function startMenuTracking() {
+  window.addEventListener('mousemove',  onMenuPointer, { passive: true });
+  window.addEventListener('touchmove',  onMenuPointer, { passive: true });
+  window.addEventListener('touchstart', onMenuPointer, { passive: true });
+}
+
+function stopMenuTracking() {
+  window.removeEventListener('mousemove',  onMenuPointer);
+  window.removeEventListener('touchmove',  onMenuPointer);
+  window.removeEventListener('touchstart', onMenuPointer);
+}
+
+function goToMenu() {
+  clearInterval(timerInterval);
+  stopBeeping();
+  roundActive = false;
+  document.getElementById('overlay-lost').classList.add('hidden');
+  document.getElementById('overlay-win').classList.add('hidden');
+  document.getElementById('overlay-confirm').classList.add('hidden');
+  setTeamBg(null);
+  showScreen('screen-menu');
+  startMenuTracking();
+}
+
+// ============================================================
+//  IDLE SCREEN
+// ============================================================
+function showIdle() {
+  showScreen('screen-idle');
+  updateScores();
+  setTeamBg(gameMode === 'elimination' ? 'gold' : currentTeam);
+
+  const name = currentTeam === 'blue' ? 'Blue' : 'Red';
+  document.getElementById('idle-team-label').textContent = gameMode === 'elimination' ? 'Pass the Phone' : name + ' Team';
+
+  const orb  = document.getElementById('idle-orb');
+  const hint = document.getElementById('idle-hint');
+
+  if (idleMode === 'begin') {
+    orb.textContent      = 'BEGIN';
+    orb.style.whiteSpace = '';
+    hint.textContent     = 'Pass the phone to ' + name + ' Team';
+  } else {
+    orb.textContent      = 'NEW\nWORD';
+    orb.style.whiteSpace = 'pre';
+    hint.textContent     = 'You have the phone — press to start!';
+  }
+}
+
+function handleOrbPress() {
+  if (soundEnabled && !audioCtx) initAudio();
+  currentWord = getWord();
+  skipUsed    = false;
+
+  if (idleMode === 'begin') {
+    // Fresh round — start a new timer
+    timerDuration = Math.floor(Math.random() * 26) + 35; // 35–60 s
+    timerStart    = Date.now();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(tickTimer, 100);
+    stopBeeping();
+    if (soundEnabled && audioCtx) scheduleBeep();
+  }
+  // If idleMode === 'newword', timer is already running — just continue
+
+  startRound();
+}
+
+// ============================================================
+//  ROUND
+// ============================================================
+function startRound() {
+  roundActive = true;
+
+  showScreen('screen-active');
+  updateScores();
+  setTeamBg(gameMode === 'elimination' ? 'gold' : currentTeam);
+
+  const gotItBtn = document.getElementById('got-it-btn');
+  gotItBtn.classList.toggle('blue', gameMode !== 'elimination' && currentTeam === 'blue');
+  gotItBtn.classList.toggle('red',  gameMode !== 'elimination' && currentTeam === 'red');
+
+  document.getElementById('active-word').textContent = currentWord;
+  refreshSkipBtn();
+}
+
+function tickTimer() {
+  const elapsed   = (Date.now() - timerStart) / 1000;
+  const remaining = Math.max(0, timerDuration - elapsed);
+
+  if (remaining <= 0) {
+    clearInterval(timerInterval);
+    timerExpired();
+  }
+}
+
+function refreshSkipBtn() {
+  const btn = document.getElementById('skip-btn');
+  if (skipUsed) {
+    btn.textContent = 'Skip (used)';
+    btn.classList.add('btn-disabled');
+  } else {
+    btn.textContent = 'Skip';
+    btn.classList.remove('btn-disabled');
+  }
+}
+
+function gotIt() {
+  // Timer keeps running while phone is passed
+  roundActive = false;
+  currentTeam = currentTeam === 'blue' ? 'red' : 'blue';
+  idleMode    = 'newword';
+  skipUsed    = false;
+  showIdle();
+}
+
+function skipWord() {
+  if (skipUsed) return;
+  skipUsed    = true;
+  currentWord = getWord();
+  document.getElementById('active-word').textContent = currentWord;
+  refreshSkipBtn();
+}
+
+// ============================================================
+//  TIMER EXPIRED
+// ============================================================
+function timerExpired() {
+  roundActive = false;
+  stopBeeping();
+  playAlarm();
+
+  const losingName = currentTeam === 'blue' ? 'Blue' : 'Red';
+  document.getElementById('lost-sub').textContent = gameMode === 'elimination'
+    ? 'Time to face the music'
+    : losingName + ' Team loses this round';
+
+  const midPass = idleMode === 'newword'; // timer fired before NEW WORD was pressed
+  document.getElementById('lost-guess-section').style.display = midPass ? 'none' : 'contents';
+  document.getElementById('lost-pass-section').style.display  = midPass ? 'block' : 'none';
+  if (!midPass) {
+    document.getElementById('lost-word').textContent = currentWord;
+  }
+
+  document.getElementById('overlay-lost').classList.remove('hidden');
+}
+
+function handleMidPassLoss() {
+  document.getElementById('overlay-lost').classList.add('hidden');
+  // Other team (the one that just passed) gets 1 point
+  const otherTeam = currentTeam === 'blue' ? 'red' : 'blue';
+  scores[otherTeam] += 1;
+  if (checkWin()) return;
+  // Losing team keeps phone, fresh BEGIN
+  idleMode = 'begin';
+  showIdle();
+}
+
+function handleOtherTeamGuess(correct) {
+  document.getElementById('overlay-lost').classList.add('hidden');
+
+  const otherTeam = currentTeam === 'blue' ? 'red' : 'blue';
+  scores[otherTeam] += correct ? 2 : 1;
+
+  if (checkWin()) return;
+
+  // Loser keeps phone — issue a new word, show BEGIN
+  currentWord = getWord();
+  idleMode    = 'begin';
+  skipUsed    = false;
+  showIdle();
+}
+
+// ============================================================
+//  WIN CHECK
+// ============================================================
+function checkWin() {
+  const winner = scores.blue >= WIN_SCORE ? 'blue' : scores.red >= WIN_SCORE ? 'red' : null;
+  if (!winner) return false;
+
+  const name = winner === 'blue' ? 'Blue' : 'Red';
+  document.getElementById('win-title').textContent = '🎉 ' + name + ' Team Wins!';
+  document.getElementById('win-blue').textContent  = scores.blue;
+  document.getElementById('win-red').textContent   = scores.red;
+  document.getElementById('overlay-win').classList.remove('hidden');
+  return true;
+}
+
+// Start tracking immediately — menu is the first screen
+startMenuTracking();
+</script>
+</body>
+</html>

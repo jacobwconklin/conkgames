@@ -35,5 +35,6 @@ export const games: Game[] = [
     players: '4-Infinity',
     thumbnail: '/thumbs/phonepass.png',
     url: 'https://conkgames.com/phonepass',
+    imageFit: 'contain',
   },
 ];

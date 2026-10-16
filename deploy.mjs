@@ -81,14 +81,14 @@ for (const file of distFiles) {
   await putFile(file, rel);
 }
 
-// Delete S3 objects under the "site" keys that no longer exist in dist.
-// We only delete keys that don't look like game folders (no slash after first segment means it's a root asset).
-// Game folders are top-level directories with a single index.html — we skip deleting those.
+// Preserve all assets in game folders, including separately uploaded web builds.
 const gameFolders = new Set(
   (await readdir('single_file_games', { withFileTypes: true }))
     .filter(e => e.isDirectory())
     .map(e => e.name)
 );
+const externalGameFolders = JSON.parse(await readFile('external-game-folders.json', 'utf8'));
+for (const folder of externalGameFolders) gameFolders.add(folder);
 
 let continuationToken;
 const staleKeys = [];

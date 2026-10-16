@@ -191,6 +191,19 @@ aws cloudfront create-invalidation \
 
 ## Adding a New Game (Future)
 
+### Hit or Quit (separately uploaded Expo web build)
+
+- Public URL: `https://conkgames.com/hitorquit/`
+- S3 prefix: `s3://<BUCKET_NAME>/hitorquit/` (using the existing site bucket).
+- Upload the **contents** of the exported web build into that prefix: `hitorquit/index.html`, `hitorquit/_expo/...`, `hitorquit/assets/...`, and any other exported files. Do not add an extra `dist/` folder.
+- Build asset URLs and routes must work under `/hitorquit/`.
+- The existing CloudFront folder rewrite serves `/hitorquit/index.html`. Client-side nested routes need matching exported HTML or a game-specific rewrite.
+- `external-game-folders.json` protects this entire prefix from the portal deploy script's stale-file deletion. The game build is uploaded separately.
+- The catalog currently uses `public/thumbs/hitorquit.svg` as a temporary thumbnail; replace it and update the catalog path when the final image is available.
+- After uploading, invalidate `/hitorquit/*` in CloudFront.
+
+### Single-file games
+
 Each new game is a folder under `single_file_games/<gamename>/` in the repo with a single `index.html` inside. CI/CD syncs it automatically on push. To deploy manually:
 
 1. Create `single_file_games/newgame/index.html` in the repo

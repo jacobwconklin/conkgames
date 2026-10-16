@@ -13,6 +13,16 @@ export interface Game {
 
 export const games: Game[] = [
   {
+    slug: 'hitorquit',
+    title: 'Hit or Quit',
+    description: 'Play solo or with up to 8 players.',
+    players: '1-8',
+    platforms: ['Browser'],
+    thumbnail: '/thumbs/hitorquit.jpg',
+    url: 'https://conkgames.com/hitorquit/',
+    imageFit: 'contain',
+  },
+  {
     slug: 'typefight',
     title: 'TypeFight',
     description: 'Cooperative and competitive typing games.',

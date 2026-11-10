@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "ConkGames arcade portal",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build:lab && astro build",
     "preview": "astro preview",
-    "deploy": "node deploy.mjs"
+    "deploy": "node deploy.mjs",
+    "build:lab": "node scripts/build-lab.mjs",
+    "test:lab": "npm run build:lab && node --test tests/custom-character.test.mjs"
   },
   "dependencies": {
     "astro": "^6.4.6",

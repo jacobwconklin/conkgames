@@ -13,6 +13,15 @@ export interface Game {
 
 export const games: Game[] = [
   {
+    slug: 'labs',
+    title: 'labs',
+    description: 'STEM focused edutainment.',
+    players: '1',
+    platforms: ['Browser'],
+    thumbnail: '/thumbs/learning_labs_robot.jpg',
+    url: '/labs/',
+  },
+  {
     slug: 'hitorquit',
     title: 'Hit or Quit',
     description: 'Play solo or with up to 8 players.',

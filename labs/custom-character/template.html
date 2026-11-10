@@ -1,0 +1,58 @@
+<!doctype html>
+<!--
+CONK GAMES LABS / CUSTOM CHARACTER
+A middle-school STEM creation lab: draw pixel art, animate a character, and design
+and playtest a platforming world without leaving the page.
+
+Technologies: HTML, CSS, vanilla JavaScript, Canvas 2D, Pointer Events, native
+modal dialog, localStorage, and a fixed-timestep requestAnimationFrame game loop.
+No runtime framework, backend, accounts, or external image service is required.
+Source lives in labs/custom-character/: model.js (pixels/defaults/project data),
+editor.js (32 x 32 drawing tools), game.js (physics/rendering), scene.js (placement),
+and ui.js (controls/persistence). scripts/build-lab.mjs inlines the ordered modules
+and CSS into this single static HTML artifact. The Astro portal's npm run build
+includes that step; the existing S3/CloudFront deployment serves the result.
+Do not edit the generated public HTML directly; edit the sources and rebuild.
+
+Features: Edit Player, Edit Enemies, and Edit Scene galleries; a named 32 x 32
+editor with pencil, 16 colors, fill, eraser, undo, reset to protected originals,
+and Save as its only close action. Ten original dark-skinned character poses (green shirt, blue pants) teach frame animation.
+enemy1 rolls through five expressive frames; enemy2 flies through five fire-powered frames. Both can be
+stomped; side contact causes fainting. Four repeating ground tiles, flying
+background decorations, a two-color sky gradient, and placeable blocks/spikes support scene
+design. Editing pauses play. Art is separate from collision geometry. Projects
+save in this browser when local storage is available; restart preserves designs.
+
+Learning: small pixel grids and a limited palette teach silhouette and contrast;
+alternating walk frames demonstrate animation timing and state; repeating tiles
+teach tessellation; background layers teach composition; placing hazards and
+platforms encourages prediction, playtesting, and iterative design.
+-->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Custom Character — ConkGames Labs</title><style>/* LAB_STYLES */</style></head>
+<body>
+<header>
+ <div class="topline"><a href="/labs/">← Labs</a><h1>Custom Character</h1><span class="badge">DRAW · ANIMATE · BUILD · PLAY</span><span id="storage-status">Saved in this browser</span></div>
+ <div class="toolbar" aria-label="Edit categories">
+  <button data-tab="character" aria-pressed="true">Edit Player</button><button data-tab="enemy" aria-pressed="false">Edit Enemies</button><button data-tab="scene" aria-pressed="false">Edit Scene</button>
+  <button id="play" class="primary">▶ Play</button><button id="restart">Restart level</button><button id="help">How to play</button>
+ </div>
+ <div id="slots" aria-label="Editable pixel art"></div>
+ <div id="scene-tools" class="toolbar" hidden>
+  <label>Sky top <input id="sky" type="color" value="#252d4b" aria-label="Sky top color"></label>
+  <label>Sky bottom <input id="sky-bottom" type="color" value="#8a7caa" aria-label="Sky bottom color"></label>
+  <button data-place="block">＋ Blocks</button><button data-place="spike">＋ Spikes</button><button data-place="erase">Remove objects</button>
+ </div>
+ <div id="enemy-tools" class="toolbar" hidden><button data-place="enemy1">＋ Add enemy1</button><button data-place="enemy2">＋ Add enemy2</button><button data-place="erase">Remove objects</button></div>
+ <div id="camera-tools" class="toolbar" hidden><label class="camera-label">Explore level <input id="camera" type="range" min="0" max="1700" step="1" value="0" aria-label="Level camera position"></label><span>Placement pauses play. Click Play or press Escape when done.</span></div>
+ <p class="hint" id="hint">Click any pose to draw it. Walking cycles through walk 1, idle, walk 2, idle.</p>
+</header>
+<main><canvas id="game" width="1100" height="560" tabindex="0" aria-label="Platformer. Arrow keys move. Space jumps. Down crouches. Up faces forward."></canvas><div id="message" role="status" aria-live="polite"></div></main>
+<footer><span class="keyboard"><kbd>← →</kbd> Move &nbsp; <kbd>Space</kbd> Jump &nbsp; <kbd>↓</kbd> Crouch &nbsp; <kbd>↑</kbd> Front &nbsp; <kbd>R</kbd> Restart</span><div class="touch"><button data-key="ArrowLeft" aria-label="Move left">←</button><button data-key="ArrowRight" aria-label="Move right">→</button><button data-key="ArrowDown" aria-label="Crouch">↓</button><button data-key="Space">Jump</button></div><span id="state">Pose: Front</span></footer>
+<dialog id="pixel-editor" aria-labelledby="editor-title">
+ <div class="editor-heading"><div><span class="badge">PIXEL STUDIO / 32 × 32</span><h2 id="editor-title">Front</h2></div><canvas id="mini-preview" width="32" height="32" aria-label="Sprite preview"></canvas></div>
+ <div class="editor-layout"><canvas id="pixel-grid" width="512" height="512" tabindex="0" aria-label="32 by 32 pixel drawing canvas. Use arrow keys to move the cursor, Space to draw."></canvas>
+ <div class="editor-controls"><div class="tool-grid"><button data-tool="pencil" aria-pressed="true">Pencil</button><button data-tool="fill" aria-pressed="false">Fill</button><button data-tool="eraser" aria-pressed="false">Eraser</button><button id="undo">Undo</button></div><p class="palette-label">16 colors <span id="color-name">White</span></p><div id="palette" aria-label="Color palette"></div><button id="reset-art">Reset drawing</button><p id="editor-note" role="status">Reset restores the original artwork. Save applies your changes.</p><p class="editor-tip">Keep each pose the same size. Transparent pixels let the scenery show through.</p><button id="save-art" class="primary">Save</button></div></div>
+</dialog>
+<dialog id="instructions"><h2>Your own tiny world.</h2><p><strong>Edit Player:</strong> click a pose and draw with pencil, fill, or eraser. Use the 16-color palette. Save is the only way to close the pixel studio. Empty poses appear as white squares.</p><p><strong>Edit Enemies:</strong> draw five animation frames each for enemy1 and enemy2, plus their faint poses. enemy1 mirrors left/right; enemy2 reverses frame order when descending so you only draw each frame once. Jump on top to stomp either one. Their sides make you faint.</p><p><strong>Edit Scene:</strong> draw two top and two bottom ground tiles, blocks, spikes, and three flying decorations. Choose the top and bottom colors of the sky gradient. Choose Blocks or Spikes, then click the level to place them. Remove objects resets and pauses the level, then lets you delete your additions. The level slider lets you build anywhere.</p><p>Art and scene edits save automatically in this browser when available. Restart restores your placed enemies and keeps your design.</p><button id="close-help" class="primary">Let's create</button></dialog>
+<script>/* LAB_SCRIPTS */</script></body></html>

@@ -1,5 +1,5 @@
 // Game simulation, independent from the editor draft and the pixel shapes.
-function respawn(){Object.assign(player,{x:70,y:490-player.h,vx:0,vy:0,grounded:true,facing:'front',walkTime:0,dead:0,invincible:1.4});camera=0;}
+function respawn(){Object.assign(player,{x:64,y:480-player.h,vx:0,vy:0,grounded:true,facing:'front',walkTime:0,dead:0,invincible:1.4});camera=0;}
 function makeEnemy(p){return {...p,w:ENEMY_W,h:ENEMY_H,vx:p.type==='enemy2'?0:-65,vy:0,grounded:true,dead:0,originY:p.y,direction:-1,animTime:0};}
 function restart(){respawn();enemies=placements.map(makeEnemy);won=false;confetti=[];setPlacing(null);notify('Fresh start. Your art and level are ready.');}
 function faint(){if(player.dead||player.invincible>0)return;player.dead=.9;player.vx=player.vy=0;notify('Fainted! Back to the start…',1.4);}
@@ -14,16 +14,26 @@ function moveBody(body,dt){
  }
  return wall;
 }
-function currentPose(){if(player.dead)return'faint';if(!player.grounded)return'jump';if(keys.has('ArrowDown'))return'crouch';if(player.vx)return player.facing+[1,'',2,''][Math.floor(player.walkTime/.12)%4];return player.facing;}
+function spikeHitbox(spike){return {x:spike.x,y:spike.y,w:SIZE,h:SIZE};}
+function drawHitboxes(){
+ if(!showHitboxes)return;
+ ctx.save();ctx.globalAlpha=1;ctx.lineWidth=2;ctx.setLineDash([]);
+ const outline=(body,color)=>{ctx.strokeStyle=color;ctx.strokeRect(body.x,body.y,body.w,body.h);};
+ outline(player,'#00e5ff');
+ for(const enemy of enemies)if(!enemy.dead){outline(enemy,'#ffb347');ctx.strokeStyle='#55ff77';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(enemy.x,enemy.y);ctx.lineTo(enemy.x+enemy.w,enemy.y);ctx.stroke();ctx.lineWidth=2;}
+ for(const spike of spikes)outline(spikeHitbox(spike),'#ff60a8');
+ ctx.restore();
+}
+function currentPose(){if(player.dead)return'faint';if(!player.grounded)return'jump';if(player.vx)return ['walk1','sideways','walk2','sideways'][Math.floor(player.walkTime/.12)%4];return player.facing==='front'?'front':'sideways';}
 function update(dt){
  clock+=dt;if(messageUntil&&clock>messageUntil&&!placing){$('message').textContent='';messageUntil=0;}
  if(placing||$('pixel-editor').open||$('instructions').open)return;
  updateConfetti(dt);
  if(player.dead){player.dead=Math.max(0,player.dead-dt);if(!player.dead)respawn();return;}
  player.invincible=Math.max(0,player.invincible-dt);
- const direction=Number(keys.has('ArrowRight'))-Number(keys.has('ArrowLeft'));
- player.vx=keys.has('ArrowDown')&&player.grounded?0:direction*245;
- if(player.vx)player.facing=direction<0?'left':'right';else if(keys.has('ArrowUp'))player.facing='front';
+ const direction=Number(keys.has('ArrowRight')||keys.has('KeyD'))-Number(keys.has('ArrowLeft')||keys.has('KeyA'));
+ player.vx=direction*245;
+ if(player.vx)player.facing=direction<0?'left':'right';else if(keys.has('ArrowDown')||keys.has('KeyS'))player.facing='front';
  if(jumpQueued&&player.grounded){player.vy=-590;player.grounded=false;}jumpQueued=false;
  const oldBottom=player.y+player.h;moveBody(player,dt);
  if(player.vx&&player.grounded)player.walkTime+=dt;else if(player.grounded)player.walkTime=0;
@@ -46,9 +56,9 @@ function update(dt){
   }
  }
  enemies=enemies.filter(e=>e.dead!==.001&&e.y<H+100);
- for(const spike of spikes)if(overlaps(player,{x:spike.x+4,y:spike.y+9,w:24,h:23}))faint();
+ for(const spike of spikes)if(overlaps(player,spikeHitbox(spike)))faint();
  if(player.y>H+40){player.invincible=0;player.y=H-50;faint();}
- if(player.x+player.w>=2690&&player.y+player.h>=350&&player.y<490&&!player.dead&&!won){won=true;startConfetti();notify('You made it! Keep creating, or restart to try again.',6);}
+ if(player.x+player.w>=2688&&player.y+player.h>=352&&player.y<480&&!player.dead&&!won){won=true;startConfetti();notify('You made it! Keep creating, or restart to try again.',6);}
  camera=Math.max(0,Math.min(WORLD-W,player.x-W*.36));
 }
 function enemyPose(enemy){const frame=Math.floor((enemy.animTime||0)/.16)%5;return enemy.type+(enemy.dead?'Faint':'Frame'+(enemy.type==='enemy2'&&enemy.direction>0?4-frame:frame));}
@@ -57,14 +67,9 @@ function sprite(image,x,y,w,h,flip=false,fallback=false,flipY=false){
  if(image){ctx.drawImage(image,-w/2,-h,w,h);}else if(fallback){ctx.fillStyle='#fff';ctx.fillRect(-w/2,-h,w,h);}ctx.restore();
 }
 
-// Keep the feet and horizontal center stable across differently padded source frames.
-function playerSpriteBox(pose){
- const data=pixels['character.'+pose];let left=32,right=-1,bottom=-1;
- for(let y=0;y<32;y++)for(let x=0;x<32;x++)if(data[y*32+x]&&(!data[y*32+x].match(/^#[0-9a-f]{8}$/i)||parseInt(data[y*32+x].slice(7),16)>127)){left=Math.min(left,x);right=Math.max(right,x);bottom=Math.max(bottom,y);}
- if(bottom<0)return {x:player.x,y:player.y,w:player.w,h:player.h};
- return {x:player.x+player.w/2-(left+right+1)*1.5,y:player.y+player.h-(bottom+1)*3,w:96,h:96};
-}
-function drawPlayer(pose){const box=playerSpriteBox(pose);sprite(art.character[pose],box.x,box.y,box.w,box.h,false,true);}
+// Two-block artwork surrounds the centered one-block-wide collision body.
+function playerSpriteBox(pose){return {x:player.x-SIZE/2,y:player.y,w:SIZE*2,h:SIZE*2};}
+function drawPlayer(pose){const box=playerSpriteBox(pose);const flip=player.facing==='left'&&['sideways','walk1','walk2'].includes(pose);if(flip)box.x=2*(player.x+player.w/2)-box.x-box.w;sprite(art.character[pose],box.x,box.y,box.w,box.h,flip,true);}
 function drawFlameParticles(enemy){
  const direction=1,edge=enemy.y+enemy.h;
  for(let i=0;i<7;i++){const age=((enemy.animTime||0)*1.7+i/7)%1;ctx.globalAlpha=(1-age)*.8;ctx.fillStyle=i%2?'#ffe095':'#f59155';const x=enemy.x+enemy.w/2+Math.sin(i*7+age*3)*(8+age*18);ctx.fillRect(Math.round(x),Math.round(edge+direction*age*22),2+(i%2),2+(i%2));}
@@ -87,12 +92,13 @@ function draw(){
  for(const p of blocks)sprite(art.scene.block,p.x,p.y,32,32);
  for(const p of spikes)sprite(art.scene.spike,p.x,p.y,32,32);
  ctx.fillStyle='#cfdded';ctx.font='12px monospace';ctx.fillText('START / Your world starts here',35,535);
- ctx.fillStyle='#d9d0ee';ctx.fillRect(2690,350,4,140);ctx.fillStyle=won?'#ffe29a':'#b1eed6';ctx.beginPath();ctx.moveTo(2694,350);ctx.lineTo(2750,371);ctx.lineTo(2694,392);ctx.fill();
+ ctx.fillStyle='#d9d0ee';ctx.fillRect(2688,352,4,128);ctx.fillStyle=won?'#ffe29a':'#b1eed6';ctx.beginPath();ctx.moveTo(2692,352);ctx.lineTo(2752,371);ctx.lineTo(2692,392);ctx.fill();
  for(const e of enemies){if(e.dead)ctx.globalAlpha=e.dead/.45;sprite(art.enemy[enemyPose(e)],e.x,e.y,e.w,e.h,e.vx>0);if(e.type==='enemy2'&&!e.dead)drawFlameParticles(e);ctx.globalAlpha=1;}
  const pose=currentPose();if(player.invincible>0&&Math.floor(clock*10)%2===0)ctx.globalAlpha=.5;drawPlayer(pose);ctx.globalAlpha=1;
- if(placing){ctx.strokeStyle='#ffffff16';ctx.lineWidth=1;for(let x=Math.floor(camera/32)*32;x<camera+W;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=10;y<H;y+=32){ctx.beginPath();ctx.moveTo(camera,y);ctx.lineTo(camera+W,y);ctx.stroke();}
+ if(placing){ctx.strokeStyle='#ffffff16';ctx.lineWidth=1;for(let x=Math.floor(camera/32)*32;x<camera+W;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=32){ctx.beginPath();ctx.moveTo(camera,y);ctx.lineTo(camera+W,y);ctx.stroke();}
   if(pointer){const spot=placementAt(pointer.x,pointer.y,placing);if(spot){ctx.globalAlpha=.65;if(placing!=='erase')sprite(placing==='block'||placing==='spike'?art.scene[placing]:art.enemy[placing+'Frame0'],spot.x,spot.y,spot.w,spot.h);ctx.globalAlpha=1;ctx.strokeStyle=placing==='erase'?'#ff7777':'#b1eed6';ctx.strokeRect(spot.x,spot.y,spot.w,spot.h);if(placing==='enemy2'){ctx.setLineDash([4,4]);ctx.strokeRect(spot.x,spot.y-64,spot.w,spot.h+128);ctx.setLineDash([]);}}else{ctx.fillStyle='#ffb0b0';ctx.fillText(placing==='erase'?'Click a placed object':'Choose an open space',Math.min(pointer.x,camera+W-180),Math.max(20,pointer.y));}}
  }
+ drawHitboxes();
  ctx.restore();drawConfetti();$('state').textContent='Pose: '+poses.find(p=>p[0]===pose)[1]+(art.character[pose]?'':' · white square');
  for(const el of $('slots').children)el.classList.toggle('active',tab==='character'&&el.dataset.pose===pose);
 }

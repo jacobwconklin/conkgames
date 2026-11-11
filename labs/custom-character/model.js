@@ -1,12 +1,28 @@
 // Shared project model and editable, code-native pixel defaults.
 const $ = id => document.getElementById(id);
-const W=1100, H=560, WORLD=2800, SIZE=32, ENEMY_W=64, ENEMY_H=56, GRAVITY=1550;
+const W=1100, H=560, WORLD=2816, SIZE=32, ENEMY_W=64, ENEMY_H=64, GRAVITY=1550;
 const canvas=$('game'), ctx=canvas.getContext('2d');
 const palette=['#17111f','#ffffff','#73717d','#c6c5cf','#653c29','#b4784d','#efb58a','#e44b60','#f59155','#ffe095','#38875c','#a1df88','#3d6acb','#83c8e5','#7852a4','#e39ac3'];
 const colorNames=['Ink','White','Slate','Silver','Dark brown','Brown','Peach','Red','Orange','Yellow','Green','Mint','Blue','Sky','Purple','Pink'];
-const poses=[['front','Front'],['left','Left idle'],['left1','Left walk 1'],['left2','Left walk 2'],['right','Right idle'],['right1','Right walk 1'],['right2','Right walk 2'],['jump','Jump'],['crouch','Crouch'],['faint','Faint']];
+const poses=[['front','Front'],['sideways','Sideways'],['walk1','Walk 1'],['walk2','Walk 2'],['jump','Jump'],['faint','Faint']];
 const catalogs={character:poses,enemy:['enemy1','enemy2'].flatMap(type=>[...Array.from({length:5},(_,i)=>[type+'Frame'+i,type+' · '+(i+1)]),[type+'Faint',type+' faint']]),scene:[['topA','Ground top A'],['topB','Ground top B'],['bottomA','Ground bottom A'],['bottomB','Ground bottom B'],['block','Block'],['spike','Spikes'],['floating1','floating1'],['floating2','floating2'],['floating3','floating3']]};
-const blankPixels=()=>Array(1024).fill(null);
+const blankPixels=(height=32)=>Array(32*height).fill(null);
+// Nearest-neighbor migration fits old square artwork inside a two-block player canvas.
+function tallPlayerPixels(source){
+ const result=blankPixels(64),occupied=source.map((c,i)=>c?i:-1).filter(i=>i>=0);
+ if(!occupied.length)return result;
+ const left=Math.min(...occupied.map(i=>i%32)),right=Math.max(...occupied.map(i=>i%32));
+ const top=Math.min(...occupied.map(i=>Math.floor(i/32))),bottom=Math.max(...occupied.map(i=>Math.floor(i/32)));
+ const scale=Math.min(32/(right-left+1),64/(bottom-top+1)),w=Math.round((right-left+1)*scale),h=Math.round((bottom-top+1)*scale),offset=Math.floor((32-w)/2);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++)result[(64-h+y)*32+offset+x]=source[(top+Math.min(bottom-top,Math.floor(y/scale)))*32+left+Math.min(right-left,Math.floor(x/scale))];
+ return result;
+}
+// Fit a saved tall canvas into the middle half of the square, preserving world proportions.
+function squarePlayerPixels(source){
+ const result=blankPixels();
+ for(let y=0;y<32;y++)for(let x=0;x<16;x++)result[y*32+x+8]=source[(y*2)*32+x*2]||source[(y*2)*32+x*2+1]||source[(y*2+1)*32+x*2]||source[(y*2+1)*32+x*2+1];
+ return result;
+}
 function defaultPixels(group,id,wheelDirection=1) {
  const pixels=blankPixels();
  const rect=(x,y,w,h,c)=>{for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++)if(i>=0&&i<32&&j>=0&&j<32)pixels[j*32+i]=palette[c];};
@@ -77,30 +93,35 @@ for(const [group,entries] of Object.entries(catalogs)) for(const [id] of entries
 // Protected originals are bundled with the page and never loaded from saved projects.
 Object.freeze(ORIGINAL_SPRITES);
 function pixelCanvas(data) {
- const c=document.createElement('canvas'); c.width=c.height=32; const g=c.getContext('2d');
+ const c=document.createElement('canvas'); c.width=32; c.height=data.length/32; const g=c.getContext('2d');
  data.forEach((color,i)=>{if(color){g.fillStyle=color;g.fillRect(i%32,Math.floor(i/32),1,1);}}); return c;
 }
 function bake(group,id) { const data=pixels[group+'.'+id]; art[group][id]=data.some(Boolean)?pixelCanvas(data):null; }
 function bakeAll() { for(const [group,entries] of Object.entries(catalogs))for(const [id] of entries)bake(group,id); }
-const basePlatforms=[{x:0,y:490,w:820,h:70},{x:940,y:490,w:760,h:70},{x:1830,y:490,w:970,h:70},{x:240,y:394,w:160,h:22},{x:490,y:310,w:160,h:22},{x:750,y:255,w:170,h:22},{x:1040,y:386,w:190,h:22},{x:1330,y:300,w:150,h:22},{x:1570,y:385,w:180,h:22},{x:1930,y:390,w:160,h:22},{x:2190,y:310,w:160,h:22},{x:2450,y:390,w:160,h:22}];
+const basePlatforms=[[0,15,26,3],[30,15,23,3],[57,15,31,3],[8,12,5,1],[15,10,5,1],[24,8,5,1],[33,12,6,1],[42,9,5,1],[49,12,6,1],[60,12,5,1],[68,10,5,1],[77,12,5,1]].map(([x,y,w,h])=>({x:x*SIZE,y:y*SIZE,w:w*SIZE,h:h*SIZE}));
 let blocks=[], spikes=[], placements=[], enemies=[], skyColor='#252d4b', skyBottomColor='#8a7caa';
 const solids=()=>basePlatforms.concat(blocks);
 let tab='character', camera=0, placing=null, pointer=null, clock=0, lastTime=0, accumulator=0, messageUntil=0, won=false, jumpQueued=false;
 const keys=new Set();
-const player={x:70,y:406,w:48,h:84,vx:0,vy:0,grounded:true,facing:'front',walkTime:0,dead:0,invincible:0};
-const spawnArea={x:32,y:394,w:112,h:96};
+const player={x:64,y:416,w:32,h:64,vx:0,vy:0,grounded:true,facing:'front',walkTime:0,dead:0,invincible:0};
+const spawnArea={x:32,y:384,w:96,h:96};
 function overlaps(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
 function notify(text,seconds=4){$('message').textContent=text;messageUntil=seconds?clock+seconds:0;}
 function clearKeys(){keys.clear();jumpQueued=false;}
 const STORAGE_KEY='conkgames-custom-character-v2';
 function saveProject(){
- try {localStorage.setItem(STORAGE_KEY,JSON.stringify({version:2,playerDefaultsVersion:2,enemyFramesVersion:2,enemySizeVersion:2,pixels,blocks,spikes,placements,skyColor,skyBottomColor}));$('storage-status').textContent='Saved in this browser';}
- catch {$('storage-status').textContent='Session only — storage unavailable';}
+ try {localStorage.setItem(STORAGE_KEY,JSON.stringify({version:2,blockGridVersion:1,playerDefaultsVersion:6,enemyFramesVersion:2,enemySizeVersion:2,pixels,blocks,spikes,placements,skyColor,skyBottomColor}));}
+ catch {notify('Session only — storage unavailable');}
 }
 function restoreProject(){
  try {
   const raw=localStorage.getItem(STORAGE_KEY); if(!raw)return;
   const data=JSON.parse(raw); if(data.version!==2)return;
+  if(data.pixels&&!data.pixels['character.sideways'])data.pixels['character.sideways']=data.pixels['character.idle']||data.pixels['character.right'];
+  // Adopt saved right-facing frames for the shared animation.
+  for(const [id,old] of [['sideways','right'],['walk1','right1'],['walk2','right2']]){
+   if(data.pixels&&!data.pixels['character.'+id]&&data.pixels['character.'+old])data.pixels['character.'+id]=data.pixels['character.'+old];
+  }
   // Keep existing placements and legacy custom enemy art as frame 1.
   for(const [oldId,newId] of [['wheel','enemy1Frame0'],['spring','enemy2Frame0'],['wheelFaint','enemy1Faint'],['springFaint','enemy2Faint']]){
    const saved=data.pixels?.['enemy.'+oldId];
@@ -112,12 +133,14 @@ function restoreProject(){
   for(const [oldId,newId] of [['bird','floating1'],['butterfly','floating2'],['balloon','floating3']]) {
    if(data.pixels && !data.pixels['scene.'+newId] && data.pixels['scene.'+oldId]) data.pixels['scene.'+newId]=data.pixels['scene.'+oldId];
   }
-  for(const key of Object.keys(pixels))if(Array.isArray(data.pixels?.[key])&&data.pixels[key].length===1024&&data.pixels[key].every(c=>c===null||(typeof c==='string'&&/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(c)))){
+  for(const key of Object.keys(pixels))if(Array.isArray(data.pixels?.[key])&&(data.pixels[key].length===pixels[key].length||(key.startsWith('character.')&&data.pixels[key].length===2048))&&data.pixels[key].every(c=>c===null||(typeof c==='string'&&/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(c)))){
    const saved=data.pixels[key];
    const oldPlayerDefault=!data.playerDefaultsVersion&&key.startsWith('character.')&&(saved.every(c=>c===null)||saved.every(c=>c==='#ffffff'));
-   const oldPlayerArt=key.startsWith('character.')&&JSON.stringify(saved)===JSON.stringify(SOURCE_PLAYER_PIXELS[key.slice(10)]);
+   const id=key.slice(10),legacyId=id==='sideways'?'idle':id;
+   const legacy=LEGACY_PLAYER_PIXELS[legacyId];
+   const oldPlayerArt=key.startsWith('character.')&&(isReplacedPlayerDefault(id,saved)||[PREVIOUS_PLAYER_PIXELS[id],SOURCE_PLAYER_PIXELS[legacyId],legacy,legacy&&tallPlayerPixels(legacy)].some(original=>original&&JSON.stringify(saved)===JSON.stringify(original)));
    const oldWheelFrame=key.startsWith('enemy.enemy1Frame')&&JSON.stringify(saved)===JSON.stringify(defaultPixels('enemy',key.slice(6),-1));
-   if(!oldPlayerDefault&&!oldPlayerArt&&!oldWheelFrame)pixels[key]=saved;
+   if(!oldPlayerDefault&&!oldPlayerArt&&!oldWheelFrame)pixels[key]=key.startsWith('character.')&&saved.length===2048?squarePlayerPixels(saved):saved;
   }
   const valid=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=0&&p.x<=WORLD-32&&p.y>=0&&p.y<=H-28;
   blocks=(Array.isArray(data.blocks)?data.blocks:[]).filter(valid).slice(0,300).map(p=>({x:p.x,y:p.y,w:32,h:32}));
@@ -127,7 +150,16 @@ function restoreProject(){
    if(p.type==='enemy1'){const support=solids().find(s=>Math.abs(s.y-(p.y+28))<2&&p.x>=s.x&&p.x<s.x+s.w);if(support){p.x=Math.max(support.x,Math.min(support.x+support.w-ENEMY_W,p.x));p.y=support.y-ENEMY_H;}else p.y-=28;}
    else p.y=Math.max(64,p.y-14);
   }
+  if(!data.blockGridVersion){
+   const snap=value=>Math.round(value/SIZE)*SIZE;
+   for(const p of blocks){p.x=Math.min(WORLD-SIZE,snap(p.x));p.y=Math.min(512,snap(p.y));}
+   for(const p of spikes){p.x=Math.min(WORLD-SIZE,snap(p.x));p.y=Math.min(512,snap(p.y));}
+   for(const p of placements){p.x=Math.min(WORLD-ENEMY_W,snap(p.x));p.y=snap(p.y);
+    if(p.type==='enemy1'){const surface=solids().filter(s=>p.x>=s.x&&p.x+ENEMY_W<=s.x+s.w&&s.y>=p.y).sort((a,b)=>a.y-b.y)[0];if(surface)p.y=surface.y-ENEMY_H;}
+    else p.y=Math.max(64,Math.min(416,p.y));
+   }
+  }
   if(/^#[0-9a-f]{6}$/i.test(data.skyColor))skyColor=data.skyColor;
   if(/^#[0-9a-f]{6}$/i.test(data.skyBottomColor))skyBottomColor=data.skyBottomColor;
- } catch {$('storage-status').textContent='Session only — saved project unavailable';}
+ } catch {notify('Session only — saved project unavailable');}
 }

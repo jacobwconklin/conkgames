@@ -8,8 +8,8 @@ function placementAt(x,y,type=placing||'enemy1'){
  if(type==='erase')return objectAt(x,y);
  const width=type==='enemy1'||type==='enemy2'?ENEMY_W:32;
  const sx=Math.max(0,Math.min(WORLD-width,Math.floor(x/32)*32));let candidate;
- if(type==='block')candidate={x:sx,y:Math.round((y-16-10)/32)*32+10,w:32,h:32};
- else if(type==='enemy2')candidate={x:sx,y:Math.round(y-ENEMY_H/2),w:ENEMY_W,h:ENEMY_H};
+ if(type==='block')candidate={x:sx,y:Math.floor(y/SIZE)*SIZE,w:32,h:32};
+ else if(type==='enemy2')candidate={x:sx,y:Math.floor(y/SIZE)*SIZE,w:ENEMY_W,h:ENEMY_H};
  else{
   const height=type==='spike'?32:ENEMY_H;
   const surface=solids().filter(p=>sx>=p.x&&sx+width<=p.x+p.w&&p.y>=y-8).sort((a,b)=>a.y-b.y)[0];
